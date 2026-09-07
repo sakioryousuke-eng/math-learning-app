@@ -5,3 +5,5 @@
 
 /* Adjacent items in a world are branches, not implied prerequisite edges. */
 .curriculum-route li::after { display: none; }
+
+.panel figure{margin:1rem 0}.panel figure svg{display:block;width:100%;height:auto}.panel figcaption{font-size:.8rem;line-height:1.7;margin-top:.5rem}

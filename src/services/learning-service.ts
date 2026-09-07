@@ -15,6 +15,7 @@ import type {GradingReceipt,TechnicalCode} from '../grading/schema.ts';
 import {toAssessment,toMaxAttempt} from '../grading/adapter.ts';
 import {gradingProblem} from '../grading/problems.ts';
 import {japanDay} from '../application/clock.ts';
+import {canUse,stableReady,eligibleEvidenceLearner} from '../learning/material-policy.ts';
 export type Screen='diagnostic'|'home'|'problem'|'submission'|'result'|'explanation'|'map'|'records'|'max';
 export type Profile='new'|'quadratic'|'repair'|'max-two'|'qfn-ready'|'complete';
 export const profileLabels:Record<Profile,string>={new:'A 初回利用者',quadratic:'B 二次関数 攻略途中',repair:'C 因数分解 修復中','max-two':'D 二次方程式 MAX 2/3','qfn-ready':'E 二次関数 MAX直前',complete:'F 二次関数 MAX済み'};
@@ -26,7 +27,7 @@ export class LearningService {
   private catalog:LearningCatalog;
   private get master(){return this.catalog.master;}
   private get problems(){return this.catalog.problems;}
-  private get routeMaster(){return {...this.master,units:this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id)||u.id===this.learner.activeUnit)};}
+  private get routeMaster(){return {...this.master,skills:this.master.skills.filter(s=>!this.catalog.retiredSkillIds?.includes(s.id)),units:this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id)||u.id===this.learner.activeUnit)};}
   private get diagnosticUnits(){return this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id));}
   private screen:Screen='diagnostic';
   private current:Current|null=null;
@@ -49,9 +50,11 @@ export class LearningService {
   private realSubmittedAt:number|null=null;
   private realEvaluations:GradingReceipt[]=[];
   private technicalErrors:{at:string;code:TechnicalCode}[]=[];
+  private hintedProblems:string[]=[];
+  showIntroduction(){if(!this.current||this.current.context==='max')throw new Error('導入説明はこの問題では利用できません。');if(!this.hintedProblems.includes(this.current.problemId))this.hintedProblems.push(this.current.problemId);}
   constructor(devMode=true,catalog:LearningCatalog=legacyCatalog){this.devMode=devMode;this.catalog=catalog;this.learner=createLearner(catalog.master);}
   chooseUnit(unitId:string,mode:'learn'|'max'='learn'){if(!this.learner.diagnosticCompleted||this.current&&!this.result)throw new Error("現在の問題を完了してください。");startUnit(this.master,this.learner,unitId);this.current=null;this.result=null;this.practiceFocus=null;if(mode==='max')this.screen='max';else this.continueLearning();}
-  exportCheckpoint(){return structuredClone({learner:this.learner,screen:this.screen,current:this.current,result:this.result,profile:this.profile,clock:this.clock,serial:this.serial,used:this.used,diagUnit:this.diagUnit,passed:this.passed,diagIds:this.diagIds,diagnosisFinished:this.diagnosisFinished,diagPlacement:this.diagPlacement,practiceFocus:this.practiceFocus,ended:this.ended,notice:this.notice,realToken:this.realToken,realStartedAt:this.realStartedAt,realSubmittedAt:this.realSubmittedAt,realEvaluations:this.realEvaluations,technicalErrors:this.technicalErrors});}
+  exportCheckpoint(){return structuredClone({learner:this.learner,screen:this.screen,current:this.current,result:this.result,profile:this.profile,clock:this.clock,serial:this.serial,used:this.used,diagUnit:this.diagUnit,passed:this.passed,diagIds:this.diagIds,diagnosisFinished:this.diagnosisFinished,diagPlacement:this.diagPlacement,practiceFocus:this.practiceFocus,ended:this.ended,notice:this.notice,realToken:this.realToken,realStartedAt:this.realStartedAt,realSubmittedAt:this.realSubmittedAt,realEvaluations:this.realEvaluations,technicalErrors:this.technicalErrors,hintedProblems:this.hintedProblems});}
   restoreCheckpoint(checkpoint:ReturnType<LearningService['exportCheckpoint']>){Object.assign(this,structuredClone(checkpoint));}
   synchronizeClock(at:number){if(!Number.isFinite(at))throw new Error('Invalid clock');this.clock=Math.max(this.clock,at);}
   setInitialClock(at:number,learnerId:string){this.clock=at;this.learner.id=learnerId;}
@@ -65,43 +68,44 @@ export class LearningService {
     const p=this.learner,task=selectTask(this.routeMaster,p);
     const unitId=p.activeUnit??this.routeMaster.units.find(u=>unitStatus(this.master,p,u.id)==='OPEN')?.id??null;
     const policy=unitId?this.master.maxDefinitions.find(d=>d.unitId===unitId)!:null;
-    const evidence=unitId?maxEvidence(this.master,p,unitId,this.now):[];
+    const evidence=unitId?maxEvidence(this.master,eligibleEvidenceLearner(this.catalog,p),unitId,this.now):[];
     const attempts=unitId?[...(p.maxAttempts[unitId]??[]),...(p.diagnosticMaxEvidence[unitId]??[])]:[];
     const usedToday=attempts.filter(a=>dateKey(a.at)===dateKey(this.now)).length;
     const availableMax=unitId?this.nextMax(unitId):null;
-    return structuredClone({learner:p,screen:this.screen,current:this.current,result:this.result,profile:this.profile,devMode:this.devMode,now:this.now,task,unitId,policy,evidence,usedToday,availableMax:availableMax?.id??null,problem:this.current?this.problem(this.current.problemId):null,notice:this.notice,ended:this.ended,diagnosisFinished:this.diagnosisFinished,diagUnit:this.diagUnit,diagPlacement:this.diagPlacement,practiceFocus:this.practiceFocus,realToken:this.realToken,realEvaluations:this.realEvaluations,technicalErrors:this.technicalErrors});
+    return structuredClone({learner:p,screen:this.screen,current:this.current,result:this.result,profile:this.profile,devMode:this.devMode,now:this.now,task,unitId,policy,evidence,usedToday,availableMax:availableMax?.id??null,problem:this.current?this.problem(this.current.problemId):null,notice:this.notice,ended:this.ended,diagnosisFinished:this.diagnosisFinished,diagUnit:this.diagUnit,diagPlacement:this.diagPlacement,practiceFocus:this.practiceFocus,realToken:this.realToken,realEvaluations:this.realEvaluations,technicalErrors:this.technicalErrors,hintedProblems:this.hintedProblems});
   }
   private get now(){return new Date(this.clock).toISOString();}
   private id(){return `event-${++this.serial}`;}
   private problem(id:string):Problem{const p=this.problems.find(p=>p.id===id);if(!p)throw new Error('問題が見つかりません。');return p;}
-  private practice(skillId:string):Problem {
-    const pool=this.problems.filter(p=>p.skillId===skillId&&p.purpose==='practice');
+  private practice(skillId:string,context:Assessment['context']='practice'):Problem {
+    const pool=this.problems.filter(p=>p.skillId===skillId&&p.purpose==='practice'&&canUse(this.catalog,p,context));
     const previous=this.current?.problemId??this.used.at(-1);
     const next=pool.find(p=>!this.used.includes(p.id))??pool.find(p=>p.id!==previous);
-    if(!next)throw new Error('この技能の別問題を追加する必要があります。');return next;
+    if(!next)throw new Error('この技能は教材の数学的確認待ちです。検証済みの別問題がそろうまで学習を保留します。');return next;
   }
   private nextMax(unitId:string):Problem|undefined {
     const seen=this.learner.maxAttempts[unitId]??[];
-    return this.problems.find(p=>p.purpose==='max'&&this.master.skills.find(s=>s.id===p.skillId)?.unitId===unitId&&!seen.some(a=>a.problemId===p.id));
+    return this.problems.find(p=>p.purpose==='max'&&canUse(this.catalog,p,'max')&&this.master.skills.find(s=>s.id===p.skillId)?.unitId===unitId&&!seen.some(a=>a.problemId===p.id));
   }
   navigate(screen:'home'|'map'|'records'|'max'){
     if(screen==='home'&&!this.learner.diagnosticCompleted){this.screen='diagnostic';return;}
     this.screen=screen;
   }
   private open(problem:Problem,context:Assessment['context'],probe=false){
+    if(!canUse(this.catalog,problem,context))throw new Error('この問題は教材確認待ちです。保存された履歴と復帰先は保持しています。');
     this.realToken=crypto.randomUUID();this.realStartedAt=Date.now();this.realSubmittedAt=null;
     this.current={problemId:problem.id,context,probe};this.used.push(problem.id);this.result=null;this.screen='problem';this.ended=false;
   }
   continueLearning(){
-    if(this.current&&!this.result){this.screen='problem';return;}
+    if(this.current&&!this.result){if(!canUse(this.catalog,this.problem(this.current.problemId),this.current.context))throw new Error('中断中の教材は確認待ちです。履歴を保持して停止します。');this.screen='problem';return;}
     if(!this.learner.diagnosticCompleted){this.startDiagnostic();return;}
     let task=selectTask(this.routeMaster,this.learner);
     if(task.kind==='start'){startUnit(this.master,this.learner,task.unitId);task=selectTask(this.routeMaster,this.learner);}
     if(task.kind==='warmup'){this.open(this.practice(task.skillId),'warmup');return;}
-    if(task.kind==='repair'){this.open(this.practice(task.skillId),'repair');return;}
+    if(task.kind==='repair'){this.open(this.practice(task.skillId,'repair'),'repair');return;}
     if(task.kind==='resume'){
-      const problem=this.problem(task.problemId);this.learner.resume=null;
-      this.open(problem,'practice');this.notice='修復完了 → 元の問題へ復帰しました。';return;
+      const problem=this.problem(task.problemId);
+      this.open(problem,'practice');this.learner.resume=null;this.notice='修復完了 → 元の問題へ復帰しました。';return;
     }
     if(this.practiceFocus){this.open(this.practice(this.practiceFocus),'practice');return;}
     if(task.kind==='learn'){this.open(this.practice(task.skillId),'practice');return;}
@@ -113,8 +117,8 @@ export class LearningService {
     if(this.learner.diagnosticCompleted)throw new Error('初回診断は完了しています。');
     if(this.diagnosisFinished){this.screen='diagnostic';return;}
     const task=selectTask(this.routeMaster,this.learner);
-    const skillId=task.kind==='diagnostic'&&task.skillId?task.skillId:this.master.skills.filter(s=>s.unitId===this.diagnosticUnits[this.diagUnit].id).at(-1)!.id;
-    this.open(this.practice(skillId),'diagnostic',this.learner.diagnosticPending.length>0);
+    const skillId=task.kind==='diagnostic'&&task.skillId?task.skillId:this.routeMaster.skills.filter(s=>s.unitId===this.diagnosticUnits[this.diagUnit].id).at(-1)!.id;
+    this.open(this.practice(skillId,'diagnostic'),'diagnostic',this.learner.diagnosticPending.length>0);
   }
   private finishDiagnosis(){
     // End the assessment queue at the observed starting skill, without demotion.
@@ -137,11 +141,18 @@ export class LearningService {
     if(!this.learner.activeUnit)startUnit(this.master,this.learner,unitId);
     this.open(next,'max');
   }
-  submit(outcome:MockOutcome){
+  submit(outcome:MockOutcome,implicatedSkill?:string){
     if(!this.devMode)throw new Error('仮採点は開発確認モードだけで利用できます。');
     if(!this.current||this.result||this.screen!=='submission')throw new Error('この答案は提出できません。');
-    const c=this.current,p=this.problem(c.problemId),a=gradeMock(p,outcome,this.id(),this.now,c.context);
-    this.applyGrading(outcome,a);
+    const c=this.current,p=this.problem(c.problemId);
+    if(!canUse(this.catalog,p,c.context))throw new Error('未検証の教材は採点へ進めません。');
+    if(implicatedSkill){
+      const ancestors=(id:string):string[]=>this.master.skills.find(s=>s.id===id)!.prerequisites.flatMap(pre=>[pre,...ancestors(pre)]);
+      if(outcome!=='prerequisite'||!ancestors(p.skillId).includes(implicatedSkill))throw new Error('この答案の前提技能として扱えません。');
+    }
+    const a=gradeMock(implicatedSkill?{...p,repairSkillId:implicatedSkill}:p,outcome,this.id(),this.now,c.context);
+    if(this.catalog.reviewedOnly&&this.hintedProblems.includes(p.id))a.independent=false;
+    this.applyGrading(outcome,a,undefined,implicatedSkill?[{...structuredClone(a),id:this.id(),skillId:implicatedSkill}]:undefined);
   }
   private applyGrading(outcome:MockOutcome,a:Assessment,maxOverride?:MaxAttempt,observations?:Assessment[]){
     const c=this.current!,p=this.problem(c.problemId);
@@ -149,14 +160,32 @@ export class LearningService {
     let acquired=false,repaired=false,stable=false,notice='';
     if(c.context==='max'){
       const max:MaxAttempt=maxOverride??{problemId:p.id,independenceKey:p.independenceKey,at:this.now,noHint:true,noMethodSpecified:true,independent:true,examQuality:outcome==='correct',practicalTime:true,correctConclusion:a.solved,readable:a.readable,sufficientWriting:outcome==='correct'};
-      acquired=submitMax(this.master,this.learner,this.master.skills.find(s=>s.id===p.skillId)!.unitId,max);
+      if(this.catalog.reviewedOnly&&!maxOverride){
+        max.noHint=!this.hintedProblems.includes(p.id);
+        max.independent=a.independent;
+        max.practicalTime=Date.now()-this.realStartedAt<=25*60*1000;
+        if(!max.practicalTime)notice='25分の目安を超えたため、答案の記録は残し、今回のMAX成功証拠には含めません。';
+      }
+      const unit=this.master.skills.find(s=>s.id===p.skillId)!.unitId;
+      if(this.catalog.reviewedOnly){
+        const projected=eligibleEvidenceLearner(this.catalog,this.learner);
+        acquired=submitMax(this.master,projected,unit,max);
+        const originalAttempts=this.learner.maxAttempts,originalDiagnostic=this.learner.diagnosticMaxEvidence;
+        (originalAttempts[unit]??=[]).push(structuredClone(max));
+        this.learner={...projected,maxAttempts:originalAttempts,diagnosticMaxEvidence:originalDiagnostic};
+      }else acquired=submitMax(this.master,this.learner,unit,max);
       recordBehavior(this.learner,`max:${a.id}`);
     }
     recordAssessment(this.master,this.learner,a);
     if(c.context==='diagnostic'){
       if(a.solved&&!c.probe){
         this.diagIds.push(a.id);
-        if(this.diagIds.length===2){this.passed.push({unitId:this.diagnosticUnits[this.diagUnit].id,assessmentIds:[...this.diagIds]});this.diagIds=[];this.diagUnit++;if(this.diagUnit===this.diagnosticUnits.length)this.finishDiagnosis();}
+        const required=this.catalog.stablePolicies?.[p.skillId]?.minimum??2;
+        if(this.diagIds.length===required){
+          this.passed.push({unitId:this.diagnosticUnits[this.diagUnit].id,assessmentIds:[...this.diagIds]});this.diagIds=[];this.diagUnit++;
+          const nextUnit=this.diagnosticUnits[this.diagUnit];
+          if(!nextUnit||this.catalog.reviewedOnly&&!this.problems.some(problem=>this.master.skills.find(s=>s.id===problem.skillId)?.unitId===nextUnit.id&&canUse(this.catalog,problem,'diagnostic')))this.finishDiagnosis();
+        }
       }else if(c.probe){
         if(a.solved){this.diagPlacement=p.skillId;this.finishDiagnosis();}
         else {
@@ -179,9 +208,7 @@ export class LearningService {
         }else {notice='今回は証拠を記録しました。別問題で確認し、修復の必要性を判断します。';this.practiceFocus=p.skillId;}
       }else if(!a.solved&&c.context!=='repair'){this.practiceFocus=p.skillId;}
       if(a.solved&&c.context!=='max'){
-        const history=this.learner.assessments.filter(e=>e.skillId===p.skillId&&e.context!=='warmup');
-        const success=history.slice(history.findLastIndex(e=>!e.solved)+1).filter(e=>e.independent&&e.readable);
-        if(new Set(success.map(e=>e.problemId)).size>=2){
+        if(stableReady(this.catalog,p.skillId,this.learner.assessments)){
           confirmStable(this.learner,p.skillId);stable=true;this.practiceFocus=null;
           if(c.context==='repair'){finishRepair(this.learner);repaired=true;recordBehavior(this.learner,`repair:${a.id}`);notice='修復完了 → 攻略へ復帰。元の問題をもう一度考えます。';}
           else{this.ended=true;recordBehavior(this.learner,`section:${a.id}`);notice='この技能が前提として安定しました。今日の数学的な一区切りです。';}
@@ -236,7 +263,7 @@ export class LearningService {
       this.result!.cause=e.explanation;this.realEvaluations.push(structuredClone(receipt));
     }catch(error){Object.assign(this,backup);throw error;}
   }
-  explanation(){if(!this.result)throw new Error('採点結果がありません。');this.screen='explanation';}
+  explanation(){if(!this.result)throw new Error('採点結果がありません。');if(this.catalog.reviewedOnly&&this.current&&!this.hintedProblems.includes(this.current.problemId))this.hintedProblems.push(this.current.problemId);this.screen='explanation';}
   next(){
     if(!this.result||!this.current)throw new Error('採点結果がありません。');
     const wasExplanation=this.screen==='explanation',context=this.current.context;
@@ -256,13 +283,13 @@ export class LearningService {
     if(context==='warmup'){this.current=null;this.continueLearning();return;}
     if(done&&!wasExplanation){this.current=null;this.screen='home';return;}
     if(this.learner.repair||this.learner.resume){this.current=null;this.continueLearning();return;}
-    const next=this.practice(oldSkill);this.open(next,context);
+    const next=this.practice(oldSkill,context);this.open(next,context);
   }
   newSession(){if(!this.learner.diagnosticCompleted)throw new Error('初回診断を完了してください。');this.current=null;this.result=null;this.ended=false;beginSession(this.learner);this.screen='home';this.notice='前回確認から始めます。';}
   advanceDay(days=1){if(!this.devMode)throw new Error('開発モードのみ利用できます。');if(days<1||!Number.isInteger(days))throw new Error('正の日数が必要です。');if(this.current&&!this.result)throw new Error('提出後に日付を進めてください。');this.clock+=days*86400000;this.notice=`開発時計を${days}日進めました。`;}
   switchProfile(profile:Profile){
     if(!this.devMode)throw new Error('開発モードのみ利用できます。');
-    this.realToken='';this.realEvaluations=[];this.technicalErrors=[];
+    this.realToken='';this.realEvaluations=[];this.technicalErrors=[];this.hintedProblems=[];
     this.learner=createLearner(this.master,`demo-${profile}`);this.profile=profile;this.screen=profile==='new'?'diagnostic':'home';this.current=null;this.result=null;this.clock=Date.parse('2026-09-07T03:00:00Z');this.serial=0;this.used=[];this.diagUnit=0;this.passed=[];this.diagIds=[];this.diagnosisFinished=false;this.diagPlacement=null;this.practiceFocus=null;this.ended=false;this.notice='';
     if(profile==='new')return;
     const p=this.learner;p.diagnosticCompleted=true;
@@ -271,17 +298,17 @@ export class LearningService {
     for(const s of this.master.skills)if(p.maxUnits.includes(s.unitId))p.skills[s.id]='stable';
     if(profile==='complete')return;
     startUnit(this.master,p,profile==='max-two'?'QEQ':'QFN');
-    if(profile==='quadratic'){p.skills.QFN1='stable';p.lastSkillId='QFN1';beginSession(p);}
+    if(profile==='quadratic'){if(this.catalog.reviewedOnly){p.lastSkillId=null;p.warmupRemaining=0;}else{p.skills.QFN1='stable';p.lastSkillId='QFN1';beginSession(p);}}
     if(profile==='max-two'||profile==='qfn-ready'){
       const unit=p.activeUnit!;for(const s of this.master.skills.filter(s=>s.unitId===unit))p.skills[s.id]='stable';
-      for(const [i,problem] of this.problems.filter(s=>s.purpose==='max'&&s.skillId===`${unit}3`).slice(0,2).entries())submitMax(this.master,p,unit,{problemId:problem.id,independenceKey:problem.independenceKey,at:new Date(this.clock-(2-i)*86400000).toISOString(),noHint:true,noMethodSpecified:true,independent:true,examQuality:true,practicalTime:true,correctConclusion:true,readable:true,sufficientWriting:true});
+      for(const [i,problem] of this.problems.filter(s=>s.purpose==='max'&&canUse(this.catalog,s,'max')&&this.master.skills.find(k=>k.id===s.skillId)?.unitId===unit).slice(0,2).entries())submitMax(this.master,p,unit,{problemId:problem.id,independenceKey:problem.independenceKey,at:new Date(this.clock-(2-i)*86400000).toISOString(),noHint:true,noMethodSpecified:true,independent:true,examQuality:true,practicalTime:true,correctConclusion:true,readable:true,sufficientWriting:true});
     }
     if(profile==='repair'){
       p.skills.QFN1='stable';p.skills.QFN2='stable';
-      const original=this.problems.find(p=>p.skillId==='QFN3'&&p.topic==='統合')!;
-      const repairProblems=this.problems.filter(p=>p.skillId==='HSX2');
+      const original=this.problems.find(p=>p.skillId===(this.catalog.reviewedOnly?'QF-SIGN':'QFN3')&&canUse(this.catalog,p,'practice'))!;
+      const repairProblems=this.problems.filter(p=>p.skillId==='HSX2'&&canUse(this.catalog,p,'repair'));
       for(const problem of repairProblems.slice(0,2))recordAssessment(this.master,p,gradeMock(problem,'prerequisite',this.id(),this.now,'practice'));
-      beginRepair(this.master,p,{sourceSkillId:'QFN3',repairSkillId:'HSX2',returnToSkillId:'QFN3',returnToProblemId:original.id});
+      beginRepair(this.master,p,{sourceSkillId:original.skillId,repairSkillId:'HSX2',returnToSkillId:original.skillId,returnToProblemId:original.id});
     }
   }
 }

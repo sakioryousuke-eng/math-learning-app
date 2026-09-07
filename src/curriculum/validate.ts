@@ -29,6 +29,19 @@ export function validateCurriculum(c:Curriculum){
  assert(c.problemGuides.length===pids.size&&new Set(c.problemGuides.map(g=>g.problemId)).size===pids.size,'Problem metadata mismatch');
  for(const p of c.problems){assert(skillIds.has(p.skillId)&&(!p.repairSkillId||skillIds.has(p.repairSkillId)),'Invalid problem reference');assert(p.prompt&&p.solution&&p.answer&&p.independenceKey,'Incomplete representative');}
  for(const g of c.problemGuides)assert(pids.has(g.problemId)&&g.roles.length&&g.roles.every(r=>['introduction','basic','repair','integration','max'].includes(r)),'Invalid problem role');
+ if(c.reviewedOnly){
+  for(const p of c.problems){
+   assert(p.reviewStatus==='reviewed'||p.reviewStatus==='unreviewed','Missing review status');
+   const g=c.problemGuides.find(g=>g.problemId===p.id)!;assert(g.reviewStatus===p.reviewStatus,'Review status disagreement');
+   if(p.reviewStatus==='reviewed')assert(c.lessonMetadata?.some(l=>l.problem.id===p.id&&l.review.status==='reviewed'&&l.review.checks.length>=15),'Missing mathematical review record');
+  }
+  for(const [id,policy] of Object.entries(c.stablePolicies??{})){
+   assert(skillIds.has(id)&&policy.minimum>=2&&Number.isInteger(policy.minimum)&&policy.situations>=1&&policy.situations<=policy.minimum,'Invalid stable policy');
+   const usable=c.lessonMetadata?.filter(l=>l.problem.skillId===id&&l.problem.purpose==='practice')??[];
+   assert(new Set(usable.map(l=>l.situation)).size>=policy.situations&&new Set(usable.map(l=>l.problem.independenceKey)).size>=policy.minimum,'Insufficient independent stable tasks');
+   assert((policy.requiredSituationGroups??[]).every(group=>group.length>0&&group.some(s=>usable.some(l=>l.situation===s))),'Missing required stable situation');
+  }
+ }
  for(const s of m.skills)assert(c.problems.filter(p=>p.skillId===s.id&&p.purpose==='practice').length>=2,`Missing practice variants: ${s.id}`);
  for(const u of m.units){const representatives=c.problems.filter(p=>p.purpose==='max'&&m.skills.find(s=>s.id===p.skillId)?.unitId===u.id);assert(new Set(representatives.map(p=>p.independenceKey)).size>=3,`Missing independent MAX representatives: ${u.id}`);}
 }

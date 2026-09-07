@@ -12,6 +12,7 @@ import rawProblems from '../../data/problems.json' with {type:'json'};
 import {validateMaster} from '../math-master/validate.ts';
 import type {Master} from '../math-master/types.ts';
 export interface Problem {
+  reviewStatus?:'unreviewed'|'reviewed';
   id:string; skillId:string; topic:string; purpose:'practice'|'max'; difficulty:number;
   prompt:string; solution:string; answer:string; point:string; examAnswer:string; transfer:string;
   repairSkillId:string|null; independenceKey:string;
