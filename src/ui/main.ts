@@ -1,4 +1,5 @@
 import {profileLabels} from '../services/learning-service.ts';
+import {previewControls,bindPreview,previewSelection} from './preview-controls.ts';
 import {verificationStates} from '../application/verification.ts';
 import type {VerificationState} from '../application/verification.ts';
 import type {Profile} from '../services/learning-service.ts';
@@ -56,7 +57,7 @@ function render(){
  const stableCount=master.skills.filter(x=>!curriculum.retiredSkillIds?.includes(x.id)&&x.unitId===p.activeUnit&&p.skills[x.id]==='stable').length;
  const unitSkills=master.skills.filter(x=>!curriculum.retiredSkillIds?.includes(x.id)&&x.unitId===p.activeUnit).length;
  const profileOptions=Object.entries(profileLabels).map(([id,label])=>`<option value="${id}" ${learning.namespace==='demo:'+id?'selected':''}>${label}</option>`).join('');
- const dev=devMode?`<details class="dev" ${devOpen?'open':''}><summary>開発確認 <span>仮答案・デモユーザー</span></summary><div class="dev-content"><label for="verify-state">検証する状態</label><select id="verify-state">${Object.entries(verificationStates).map(([id,label])=>`<option value="${id}" ${learning.namespace===`demo:verify:${id}`?'selected':''}>${label}</option>`).join('')}</select>${button('この状態を開く','verify-state',true)}<p>選択した検証デモを開始状態から開きます。</p>${button('検証モードをOFF','verify-off',true)}<label for="profile">確認する状態</label><select id="profile"><option value="student" ${learning.namespace==='student:local'?'selected':''}>通常学習（保存して再開）</option>${profileOptions}</select><div class="dev-date"><span>開発時計 <b>${esc(s.now.slice(0,10))}</b></span><button data-action="day" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>翌日へ</button><button data-action="week" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>8日後へ</button></div><p>通常学習とデモは別々に保存します。再読み込み後も続きから再開します。画像AI採点は未接続です。</p>${button('次回起動を確認','session',true,!p.diagnosticCompleted)}${button('このデモを初期化','reset-demo',true,!learning.namespace.startsWith('demo:'))}<label for="grading-problem">実答案の実証問題（専用デモ）</label><select id="grading-problem">${gradingSpecs.map(g=>`<option value="${esc(g.problemId)}">${esc(g.problemId)}</option>`).join('')}</select>${button('実証問題を開く','grading-demo',true)}</div></details>`:'';
+ const dev=devMode?`<details class="dev" ${devOpen?'open':''}><summary>開発確認 <span>仮答案・デモユーザー</span></summary><div class="dev-content">${previewControls(curriculum)}<label for="verify-state">検証する状態</label><select id="verify-state">${Object.entries(verificationStates).map(([id,label])=>`<option value="${id}" ${learning.namespace===`demo:verify:${id}`?'selected':''}>${label}</option>`).join('')}</select>${button('この状態を開く','verify-state',true)}<p>選択した検証デモを開始状態から開きます。</p>${button('検証モードをOFF','verify-off',true)}<label for="profile">確認する状態</label><select id="profile"><option value="student" ${learning.namespace==='student:local'?'selected':''}>通常学習（保存して再開）</option>${profileOptions}</select><div class="dev-date"><span>開発時計 <b>${esc(s.now.slice(0,10))}</b></span><button data-action="day" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>翌日へ</button><button data-action="week" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>8日後へ</button></div><p>通常学習とデモは別々に保存します。再読み込み後も続きから再開します。画像AI採点は未接続です。</p>${button('次回起動を確認','session',true,!p.diagnosticCompleted)}${button('このデモを初期化','reset-demo',true,!learning.namespace.startsWith('demo:'))}<label for="grading-problem">実答案の実証問題（専用デモ）</label><select id="grading-problem">${gradingSpecs.map(g=>`<option value="${esc(g.problemId)}">${esc(g.problemId)}</option>`).join('')}</select>${button('実証問題を開く','grading-demo',true)}</div></details>`:'';
  const label=s.current?.context==='max'?'MAX挑戦':s.current?.context==='repair'?'武器を整備中':s.current?.context==='warmup'?'前回確認':s.current?.context==='diagnostic'?'初回診断':'今日の課題';
  const ancestorIds=(id:string):string[]=>master.skills.find(x=>x.id===id)!.prerequisites.flatMap(pre=>[pre,...ancestorIds(pre)]);
  const repairChoices=s.problem?[...new Set(ancestorIds(s.problem.skillId))].filter(id=>curriculum.problems.some(p=>p.skillId===id&&p.reviewStatus==='reviewed')):[];
@@ -102,6 +103,7 @@ function render(){
  for(const input of app.querySelectorAll<HTMLInputElement>('.image-inputs input'))input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void chooseImage(file);});
  app.querySelector('details.dev')?.addEventListener('toggle',e=>{devOpen=(e.target as HTMLDetailsElement).open;});
  app.querySelector<HTMLSelectElement>('#profile')?.addEventListener('change',e=>{const value=(e.target as HTMLSelectElement).value;void act(()=>{},()=>value==='student'?learning.useStudent():learning.useDemo(value as Profile));});
+ bindPreview(app,render);
  if(saving)for(const element of app.querySelectorAll<HTMLButtonElement|HTMLInputElement|HTMLSelectElement>('button,input,select'))element.disabled=true;
 }
 async function act(run:()=>void,operation?:()=>Promise<void>){
@@ -116,6 +118,7 @@ app.addEventListener('click',e=>{
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='preview-problem'){const selection=previewSelection();void act(()=>{},()=>learning.useReviewedPreview(selection.id,selection.stable));return;}
  if(action==='verify-off'){const url=new URL(location.href);url.searchParams.set('verify','off');location.assign(url);return;}
  if(action==='verify-state'){const state=app.querySelector<HTMLSelectElement>('#verify-state')!.value as VerificationState;void act(()=>{},()=>learning.useVerification(state));return;}
  if(action==='reset-demo'){void act(()=>{},()=>learning.resetDemo());return;}

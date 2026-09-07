@@ -245,6 +245,21 @@ export class LearningService {
     this.notice='実証専用の仮カルテです。問題切替で初期化します。';
     this.open(problem,problem.purpose==='max'?'max':'practice');
   }
+  openReviewedPreview(problemId:string,stable=false){
+    if(!this.devMode)throw new Error('開発モードのみ利用できます。');
+    const problem=this.problem(problemId);
+    if(problem.reviewStatus!=='reviewed')throw new Error('検証済みの教材だけを選択してください。');
+    this.switchProfile('new');
+    const p=this.learner,skill=this.master.skills.find(s=>s.id===problem.skillId)!;
+    const seedUnit=(id:string)=>{for(const pre of this.master.units.find(u=>u.id===id)!.prerequisites){seedUnit(pre);if(!p.maxUnits.includes(pre))p.maxUnits.push(pre);for(const s of this.master.skills.filter(s=>s.unitId===pre))p.skills[s.id]='stable';}};
+    const seedSkill=(id:string)=>{for(const pre of this.master.skills.find(s=>s.id===id)!.prerequisites){seedSkill(pre);p.skills[pre]='stable';}};
+    seedUnit(skill.unitId);seedSkill(skill.id);p.skills[skill.id]=stable?'stable':'learning';
+    p.diagnosticCompleted=true;startUnit(this.master,p,skill.unitId);
+    this.practiceFocus=problem.purpose==='max'?null:skill.id;
+    this.notice='教材確認専用の仮カルテです。通常学習の進度には反映しません。';
+    const repairOnly=this.catalog.lessonMetadata?.find(l=>l.problem.id===problemId)?.roles.every(r=>r==='repair');
+    this.open(problem,problem.purpose==='max'?'max':repairOnly?'repair':'practice');
+  }
   submitReal(raw:unknown,token:string){
     if(!this.devMode)throw new GradingError('INVALID_REQUEST','実答案の実証機能は開発モードで利用してください。');
     if(!this.current||this.result||this.screen!=='submission'||token!==this.realToken)throw new GradingError('STALE_ATTEMPT','表示中の問題が変わったため採点結果を反映しません。');
