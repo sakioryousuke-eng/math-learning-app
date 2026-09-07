@@ -7,5 +7,6 @@
 .curriculum-route li::after { display: none; }
 
 .panel figure{margin:1rem 0}.panel figure svg{display:block;width:100%;height:auto}.panel figcaption{font-size:.8rem;line-height:1.7;margin-top:.5rem}
+.answer-graph{margin:1rem 0;border:1px solid #c7d7e4;border-radius:10px;padding:.7rem;background:#fff}.answer-graph svg{width:100%;height:auto;display:block;font-size:12px}.answer-graph h3{font-size:1rem;margin:.2rem 0}.graph-key{list-style:none;padding:0;font-size:.85rem}.graph-points{font-size:.85rem;padding-left:1.5rem}.answer-graph figcaption{font-size:.8rem;color:#516779}.graph-case summary,.panel>summary{padding:.7rem 0;min-height:44px;cursor:pointer}.quadratic-answer .math-text{font-size:1rem;line-height:1.9}.panel>.quadratic-answer{border:0;padding:0}.quadratic-answer .answer-example{line-height:1.9;overflow-wrap:anywhere}@media(max-width:360px){.quadratic-answer{padding:.8rem}.answer-graph{padding:.4rem}}
 
 .dev select{min-width:0;width:100%;max-width:100%;text-overflow:ellipsis}.dev-content>button{min-height:48px}.dev summary{min-height:44px}
