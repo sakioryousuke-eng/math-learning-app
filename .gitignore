@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-production/
+.env
+.env.*
+*.pem
+*.key
+learner-data/
+uploads/
+*.local.json
+verification/images/
+verification/results/
+*RESULTS.txt
+*CHECKS.txt

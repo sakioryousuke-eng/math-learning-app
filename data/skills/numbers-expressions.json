@@ -1,0 +1,43 @@
+[
+  {
+    "id": "HSX1",
+    "unitId": "HSX",
+    "name": "実数と平方根",
+    "prerequisites": [
+      "FUN3"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "HSX2",
+    "unitId": "HSX",
+    "name": "展開と因数分解",
+    "prerequisites": [
+      "HSX1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "HSX3",
+    "unitId": "HSX",
+    "name": "絶対値・不等式の条件整理",
+    "prerequisites": [
+      "HSX2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

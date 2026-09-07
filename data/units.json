@@ -1,0 +1,56 @@
+[
+  {
+    "id": "CAL",
+    "name": "計算基礎",
+    "prerequisites": [],
+    "skillFile": "skills/calculation.json"
+  },
+  {
+    "id": "EXP",
+    "name": "式変形基礎",
+    "prerequisites": [
+      "CAL"
+    ],
+    "skillFile": "skills/expression.json"
+  },
+  {
+    "id": "EQU",
+    "name": "方程式基礎",
+    "prerequisites": [
+      "EXP"
+    ],
+    "skillFile": "skills/equation.json"
+  },
+  {
+    "id": "FUN",
+    "name": "関数基礎",
+    "prerequisites": [
+      "EQU"
+    ],
+    "skillFile": "skills/function.json"
+  },
+  {
+    "id": "HSX",
+    "name": "数と式",
+    "prerequisites": [
+      "FUN"
+    ],
+    "skillFile": "skills/numbers-expressions.json"
+  },
+  {
+    "id": "QEQ",
+    "name": "二次方程式",
+    "prerequisites": [
+      "HSX"
+    ],
+    "skillFile": "skills/quadratic-equation.json"
+  },
+  {
+    "id": "QFN",
+    "name": "二次関数",
+    "prerequisites": [
+      "QEQ"
+    ],
+    "skillFile": "skills/quadratic-function.json"
+  }
+]

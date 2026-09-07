@@ -1,0 +1,43 @@
+[
+  {
+    "id": "QFN1",
+    "unitId": "QFN",
+    "name": "平方完成とグラフ",
+    "prerequisites": [
+      "QEQ3"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "QFN2",
+    "unitId": "QFN",
+    "name": "定義域と最大・最小",
+    "prerequisites": [
+      "QFN1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "QFN3",
+    "unitId": "QFN",
+    "name": "場合分けを含む統合",
+    "prerequisites": [
+      "QFN2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

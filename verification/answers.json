@@ -1,0 +1,1647 @@
+[
+  {
+    "id": "P01-A",
+    "problemId": "EXP2-展開-1",
+    "variant": "A",
+    "image": "verification/images/P01-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "2x - 6 - 3x - 3",
+      "= -x - 9"
+    ]
+  },
+  {
+    "id": "P01-B",
+    "problemId": "EXP2-展開-1",
+    "variant": "B",
+    "image": "verification/images/P01-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "2(x-3)-3(x+1) = 2x-3x -3(2+1)",
+      "= -x-9"
+    ]
+  },
+  {
+    "id": "P01-C",
+    "problemId": "EXP2-展開-1",
+    "variant": "C",
+    "image": "verification/images/P01-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "2x - 6 - 3x - 3",
+      "= -x - 3"
+    ]
+  },
+  {
+    "id": "P01-F",
+    "problemId": "EXP2-展開-1",
+    "variant": "F",
+    "image": "verification/images/P01-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "-x - 9"
+    ]
+  },
+  {
+    "id": "P01-G",
+    "problemId": "EXP2-展開-1",
+    "variant": "G",
+    "image": "verification/images/P01-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "-x - 9"
+    ]
+  },
+  {
+    "id": "P01-H",
+    "problemId": "EXP2-展開-1",
+    "variant": "H",
+    "image": "verification/images/P01-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P01-I",
+    "problemId": "EXP2-展開-1",
+    "variant": "I",
+    "image": "verification/images/P01-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P02-A",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "A",
+    "image": "verification/images/P02-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x^2 - 5x + 6 = x^2 - 2x - 3x + 6",
+      "= x(x-2)-3(x-2)",
+      "= (x-2)(x-3)"
+    ]
+  },
+  {
+    "id": "P02-B",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "B",
+    "image": "verification/images/P02-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x^2-5x+6 = (x-5/2)^2-1/4",
+      "= (x-5/2-1/2)(x-5/2+1/2)",
+      "= (x-3)(x-2)"
+    ]
+  },
+  {
+    "id": "P02-C",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "C",
+    "image": "verification/images/P02-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(-2)+(-3)=-5, (-2)(-3)=6",
+      "x^2-5x+6 = (x-2)(x+3)"
+    ]
+  },
+  {
+    "id": "P02-F",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "F",
+    "image": "verification/images/P02-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-2)(x-3)"
+    ]
+  },
+  {
+    "id": "P02-G",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "G",
+    "image": "verification/images/P02-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "(x-2)(x-3)"
+    ]
+  },
+  {
+    "id": "P02-H",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "H",
+    "image": "verification/images/P02-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P02-I",
+    "problemId": "HSX2-因数分解-1",
+    "variant": "I",
+    "image": "verification/images/P02-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P03-A",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "A",
+    "image": "verification/images/P03-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x^2-5x+6=0",
+      "(x-2)(x-3)=0",
+      "x=2 or x=3"
+    ]
+  },
+  {
+    "id": "P03-B",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "B",
+    "image": "verification/images/P03-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x = (5 +/- sqrt(25-24))/2",
+      "x=2 or x=3"
+    ]
+  },
+  {
+    "id": "P03-C",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "C",
+    "image": "verification/images/P03-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "x=(5 +/- sqrt(25-24))/2",
+      "x=1 or x=3"
+    ]
+  },
+  {
+    "id": "P03-D",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "D",
+    "image": "verification/images/P03-D.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "condition_omission"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-2)(x-3)=0",
+      "x=2"
+    ]
+  },
+  {
+    "id": "P03-F",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "F",
+    "image": "verification/images/P03-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "x=2,3"
+    ]
+  },
+  {
+    "id": "P03-G",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "G",
+    "image": "verification/images/P03-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "x=2,3"
+    ]
+  },
+  {
+    "id": "P03-H",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "H",
+    "image": "verification/images/P03-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P03-I",
+    "problemId": "QEQ1-因数分解解法-1",
+    "variant": "I",
+    "image": "verification/images/P03-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P04-A",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "A",
+    "image": "verification/images/P04-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x^2-4x+1=0",
+      "(x-2)^2=3",
+      "x=2 +/- sqrt(3)"
+    ]
+  },
+  {
+    "id": "P04-B",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "B",
+    "image": "verification/images/P04-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x=(4 +/- sqrt(16-4))/2",
+      "=2 +/- sqrt(3)"
+    ]
+  },
+  {
+    "id": "P04-C",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "C",
+    "image": "verification/images/P04-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-2)^2=3",
+      "x=2 +/- 3"
+    ]
+  },
+  {
+    "id": "P04-D",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "D",
+    "image": "verification/images/P04-D.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "condition_omission"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-2)^2=3",
+      "x=2+sqrt(3)"
+    ]
+  },
+  {
+    "id": "P04-F",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "F",
+    "image": "verification/images/P04-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "x=2 +/- sqrt(3)"
+    ]
+  },
+  {
+    "id": "P04-G",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "G",
+    "image": "verification/images/P04-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "x=2 +/- sqrt(3)"
+    ]
+  },
+  {
+    "id": "P04-H",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "H",
+    "image": "verification/images/P04-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P04-I",
+    "problemId": "QEQ2-平方完成-1",
+    "variant": "I",
+    "image": "verification/images/P04-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P05-A",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "A",
+    "image": "verification/images/P05-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "y=x^2-4x+1=(x-2)^2-3",
+      "vertex (2,-3); axis x=2"
+    ]
+  },
+  {
+    "id": "P05-B",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "B",
+    "image": "verification/images/P05-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "y(2+t)=t^2-3=y(2-t)",
+      "t^2>=0, so vertex (2,-3); axis x=2"
+    ]
+  },
+  {
+    "id": "P05-C",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "C",
+    "image": "verification/images/P05-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "y=(x-2)^2-3",
+      "vertex (2,3); axis x=2"
+    ]
+  },
+  {
+    "id": "P05-F",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "F",
+    "image": "verification/images/P05-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "vertex (2,-3); axis x=2"
+    ]
+  },
+  {
+    "id": "P05-G",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "G",
+    "image": "verification/images/P05-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "vertex (2,-3); axis x=2"
+    ]
+  },
+  {
+    "id": "P05-H",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "H",
+    "image": "verification/images/P05-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P05-I",
+    "problemId": "QFN1-グラフ-1",
+    "variant": "I",
+    "image": "verification/images/P05-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P06-A",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "A",
+    "image": "verification/images/P06-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x-2)^2-3; 0<=x<=3",
+      "2 in [0,3]; f(2)=-3",
+      "f(0)=1, f(3)=-2",
+      "min -3 at x=2; max 1 at x=0"
+    ]
+  },
+  {
+    "id": "P06-B",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "B",
+    "image": "verification/images/P06-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "0<=x<=3 implies 0<=(x-2)^2<=4",
+      "both bounds attained at x=2 and x=0",
+      "f(x)=(x-2)^2-3",
+      "min -3 at x=2; max 1 at x=0"
+    ]
+  },
+  {
+    "id": "P06-C",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "C",
+    "image": "verification/images/P06-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x-2)^2-3; x=2 in [0,3]",
+      "f(0)=1, f(3)=9-12+1=2",
+      "min -3 at x=2; max 2 at x=3"
+    ]
+  },
+  {
+    "id": "P06-D",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "D",
+    "image": "verification/images/P06-D.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "domain_omission"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x-2)^2-3",
+      "min -3 at x=2; no maximum"
+    ]
+  },
+  {
+    "id": "P06-F",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "F",
+    "image": "verification/images/P06-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "min -3 at x=2; max 1 at x=0"
+    ]
+  },
+  {
+    "id": "P06-G",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "G",
+    "image": "verification/images/P06-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "min -3 at x=2; max 1 at x=0"
+    ]
+  },
+  {
+    "id": "P06-H",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "H",
+    "image": "verification/images/P06-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P06-I",
+    "problemId": "QFN2-最大最小-1",
+    "variant": "I",
+    "image": "verification/images/P06-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P07-A",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "A",
+    "image": "verification/images/P07-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "minimize (x-a)^2 on 0<=x<=2",
+      "a<0: nearest x=0, min a^2",
+      "0<=a<=2: nearest x=a, min 0",
+      "a>2: nearest x=2, min (2-a)^2"
+    ]
+  },
+  {
+    "id": "P07-B",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "B",
+    "image": "verification/images/P07-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "distance from a to interval [0,2]:",
+      "d=-a (a<0), 0 (0<=a<=2), a-2 (a>2)",
+      "minimum is d^2, hence",
+      "a^2 (a<0); 0 (0<=a<=2); (a-2)^2 (a>2)"
+    ]
+  },
+  {
+    "id": "P07-C",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "C",
+    "image": "verification/images/P07-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "a<0: nearest x=0, min a^2",
+      "0<=a<=2: nearest x=a, min 0",
+      "a>2: nearest x=2, min a^2-4a+2"
+    ]
+  },
+  {
+    "id": "P07-E",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "E",
+    "image": "verification/images/P07-E.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "case_split"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "a<0: x=0 gives min a^2",
+      "0<=a<=2: x=a gives min 0"
+    ]
+  },
+  {
+    "id": "P07-F",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "F",
+    "image": "verification/images/P07-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "a^2 (a<0); 0 (0<=a<=2); (a-2)^2 (a>2)"
+    ]
+  },
+  {
+    "id": "P07-G",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "G",
+    "image": "verification/images/P07-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "a^2 (a<0); 0 (0<=a<=2); (a-2)^2 (a>2)"
+    ]
+  },
+  {
+    "id": "P07-H",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "H",
+    "image": "verification/images/P07-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P07-I",
+    "problemId": "QFN3-場合分け-1",
+    "variant": "I",
+    "image": "verification/images/P07-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P08-A",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "A",
+    "image": "verification/images/P08-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x^2=4x+k -> x^2-4x-k=0",
+      "tangent iff D=16+4k=0 -> k=-4",
+      "x=2, y=4; contact (2,4)"
+    ]
+  },
+  {
+    "id": "P08-B",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "B",
+    "image": "verification/images/P08-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "x^2-4x-k=(x-2)^2-(k+4)",
+      "one intersection iff k+4=0",
+      "k=-4, x=2, y=4; contact (2,4)"
+    ]
+  },
+  {
+    "id": "P08-C",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "C",
+    "image": "verification/images/P08-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "D=16+4k=0 -> k=-4",
+      "x=2, y=2^2=2; contact (2,2)"
+    ]
+  },
+  {
+    "id": "P08-F",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "F",
+    "image": "verification/images/P08-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "k=-4; contact (2,4)"
+    ]
+  },
+  {
+    "id": "P08-G",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "G",
+    "image": "verification/images/P08-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "k=-4; contact (2,4)"
+    ]
+  },
+  {
+    "id": "P08-H",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "H",
+    "image": "verification/images/P08-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P08-I",
+    "problemId": "QFN3-判別式・交点-2",
+    "variant": "I",
+    "image": "verification/images/P08-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P09-A",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "A",
+    "image": "verification/images/P09-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-3)(x-4)>0",
+      "both factors same sign: x<3 or x>4"
+    ]
+  },
+  {
+    "id": "P09-B",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "B",
+    "image": "verification/images/P09-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-7/2)^2>1/4",
+      "|x-7/2|>1/2",
+      "x<3 or x>4"
+    ]
+  },
+  {
+    "id": "P09-C",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "C",
+    "image": "verification/images/P09-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "roots=(7 +/- sqrt(49-48))/2",
+      "roots=2,4; upward parabola",
+      "x<2 or x>4"
+    ]
+  },
+  {
+    "id": "P09-D",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "D",
+    "image": "verification/images/P09-D.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "condition_omission"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(x-3)(x-4)>0",
+      "x<=3 or x>=4"
+    ]
+  },
+  {
+    "id": "P09-F",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "F",
+    "image": "verification/images/P09-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "x<3 or x>4"
+    ]
+  },
+  {
+    "id": "P09-G",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "G",
+    "image": "verification/images/P09-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "x<3 or x>4"
+    ]
+  },
+  {
+    "id": "P09-H",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "H",
+    "image": "verification/images/P09-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P09-I",
+    "problemId": "QFN3-二次不等式-2",
+    "variant": "I",
+    "image": "verification/images/P09-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P10-A",
+    "problemId": "QFN3-統合-3",
+    "variant": "A",
+    "image": "verification/images/P10-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x+1)^2-4 on [-4,2]",
+      "f(-4)=f(2)=5, vertex is minimum",
+      "max 5 at x=-4 and x=2",
+      "(x+3)(x-1)>0 -> x<-3 or x>1",
+      "intersection with [-4,2]: [-4,-3) or (1,2]"
+    ]
+  },
+  {
+    "id": "P10-B",
+    "problemId": "QFN3-統合-3",
+    "variant": "B",
+    "image": "verification/images/P10-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "-3<=x+1<=3 -> (x+1)^2<=9",
+      "equality at x=-4,2; max 9-4=5",
+      "f(x)>0 iff |x+1|>2",
+      "with -4<=x<=2: [-4,-3) or (1,2]"
+    ]
+  },
+  {
+    "id": "P10-C",
+    "problemId": "QFN3-統合-3",
+    "variant": "C",
+    "image": "verification/images/P10-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x+1)^2-4 on [-4,2]",
+      "f(-4)=f(2)=9-4=6; max 6 at x=-4,2",
+      "(x+3)(x-1)>0 -> x<-3 or x>1",
+      "intersect: [-4,-3) or (1,2]"
+    ]
+  },
+  {
+    "id": "P10-D",
+    "problemId": "QFN3-統合-3",
+    "variant": "D",
+    "image": "verification/images/P10-D.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "domain_omission"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x+1)^2-4",
+      "max 5 at endpoints -4,2",
+      "(x+3)(x-1)>0",
+      "x<-3 or x>1"
+    ]
+  },
+  {
+    "id": "P10-E",
+    "problemId": "QFN3-統合-3",
+    "variant": "E",
+    "image": "verification/images/P10-E.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "case_split"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x+1)^2-4; endpoints give max 5 at -4,2",
+      "(x+3)(x-1)>0: both positive",
+      "1<x<=2"
+    ]
+  },
+  {
+    "id": "P10-F",
+    "problemId": "QFN3-統合-3",
+    "variant": "F",
+    "image": "verification/images/P10-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "max 5 at x=-4,2; [-4,-3) or (1,2]"
+    ]
+  },
+  {
+    "id": "P10-G",
+    "problemId": "QFN3-統合-3",
+    "variant": "G",
+    "image": "verification/images/P10-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "max 5 at x=-4,2; [-4,-3) or (1,2]"
+    ]
+  },
+  {
+    "id": "P10-H",
+    "problemId": "QFN3-統合-3",
+    "variant": "H",
+    "image": "verification/images/P10-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P10-I",
+    "problemId": "QFN3-統合-3",
+    "variant": "I",
+    "image": "verification/images/P10-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P11-A",
+    "problemId": "QEQ-MAX-3",
+    "variant": "A",
+    "image": "verification/images/P11-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "(1) (x+3)(x-2)=0 -> x=-3,2",
+      "(2) (x-3)^2=4 -> x=1,5",
+      "(3) D=36-4k=0 -> k=9",
+      "(x-3)^2=0 -> double root x=3"
+    ]
+  },
+  {
+    "id": "P11-B",
+    "problemId": "QEQ-MAX-3",
+    "variant": "B",
+    "image": "verification/images/P11-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "(1) x=(-1 +/- sqrt(1+24))/2=-3,2",
+      "(2) x^2-6x+5=(x-1)(x-5)=0 -> x=1,5",
+      "(3) x^2-6x+k=(x-3)^2+k-9",
+      "double root iff k=9; root x=3"
+    ]
+  },
+  {
+    "id": "P11-C",
+    "problemId": "QEQ-MAX-3",
+    "variant": "C",
+    "image": "verification/images/P11-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(1) (x+3)(x-2)=0 -> x=-3,2",
+      "(2) (x-3)^2=4 -> x=1,5",
+      "(3) D=36-4k=0 -> k=8; root x=3"
+    ]
+  },
+  {
+    "id": "P11-F",
+    "problemId": "QEQ-MAX-3",
+    "variant": "F",
+    "image": "verification/images/P11-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "(1) x=-3,2; (2) x=1,5; (3) k=9, x=3"
+    ]
+  },
+  {
+    "id": "P11-G",
+    "problemId": "QEQ-MAX-3",
+    "variant": "G",
+    "image": "verification/images/P11-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "(1) x=-3,2; (2) x=1,5; (3) k=9, x=3"
+    ]
+  },
+  {
+    "id": "P11-H",
+    "problemId": "QEQ-MAX-3",
+    "variant": "H",
+    "image": "verification/images/P11-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P11-I",
+    "problemId": "QEQ-MAX-3",
+    "variant": "I",
+    "image": "verification/images/P11-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  },
+  {
+    "id": "P12-A",
+    "problemId": "QFN-MAX-3",
+    "variant": "A",
+    "image": "verification/images/P12-A.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x-5/2)^2-1/4; 1<=5/2<=4",
+      "min -1/4 at x=5/2",
+      "(x-2)(x-3)<=0 -> 2<=x<=3",
+      "[a,a+1] subset [2,3] iff a>=2 and a+1<=3",
+      "a=2"
+    ]
+  },
+  {
+    "id": "P12-B",
+    "problemId": "QFN-MAX-3",
+    "variant": "B",
+    "image": "verification/images/P12-B.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "correct",
+      "errorTags": [],
+      "legibility": "readable"
+    },
+    "text": [
+      "roots 2,3, axis is midpoint 5/2 in [1,4]",
+      "f(5/2)=25/4-25/2+6=-1/4 (minimum)",
+      "upward parabola: f<=0 iff x in [2,3]",
+      "an interval of length 1 inside [2,3] must equal [2,3]",
+      "[a,a+1]=[2,3] -> a=2"
+    ]
+  },
+  {
+    "id": "P12-C",
+    "problemId": "QFN-MAX-3",
+    "variant": "C",
+    "image": "verification/images/P12-C.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "calculation"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "f(x)=(x-5/2)^2-1/4 -> min -1/4 at x=5/2",
+      "(x-2)(x-3)<=0 -> 2<=x<=3",
+      "a>=2 and a+1<=3 -> 2<=a<=3"
+    ]
+  },
+  {
+    "id": "P12-F",
+    "problemId": "QFN-MAX-3",
+    "variant": "F",
+    "image": "verification/images/P12-F.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "min -1/4 at x=5/2; 2<=x<=3; a=2"
+    ]
+  },
+  {
+    "id": "P12-G",
+    "problemId": "QFN-MAX-3",
+    "variant": "G",
+    "image": "verification/images/P12-G.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "method_selection"
+      ],
+      "legibility": "readable"
+    },
+    "text": [
+      "I replace every x^2 with x.",
+      "min -1/4 at x=5/2; 2<=x<=3; a=2"
+    ]
+  },
+  {
+    "id": "P12-H",
+    "problemId": "QFN-MAX-3",
+    "variant": "H",
+    "image": "verification/images/P12-H.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "handwriting_unreadable"
+      ],
+      "legibility": "unreadable"
+    },
+    "text": []
+  },
+  {
+    "id": "P12-I",
+    "problemId": "QFN-MAX-3",
+    "variant": "I",
+    "image": "verification/images/P12-I.png",
+    "source": "synthetic-typeset",
+    "humanReviewed": false,
+    "expected": {
+      "overall": "unresolved",
+      "errorTags": [
+        "writing",
+        "conclusion"
+      ],
+      "legibility": "blank"
+    },
+    "text": []
+  }
+]

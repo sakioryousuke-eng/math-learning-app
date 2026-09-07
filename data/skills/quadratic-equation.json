@@ -1,0 +1,43 @@
+[
+  {
+    "id": "QEQ1",
+    "unitId": "QEQ",
+    "name": "因数分解による解法",
+    "prerequisites": [
+      "HSX3"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "QEQ2",
+    "unitId": "QEQ",
+    "name": "平方完成と解の公式",
+    "prerequisites": [
+      "QEQ1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "QEQ3",
+    "unitId": "QEQ",
+    "name": "判別式と解の条件",
+    "prerequisites": [
+      "QEQ2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

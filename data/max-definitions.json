@@ -1,0 +1,51 @@
+[
+  {
+    "unitId": "CAL",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "方法指定なしの統合問題を、根拠と最終結論を含めて独立して解決できる水準"
+  },
+  {
+    "unitId": "EXP",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "方法指定なしの統合問題を、根拠と最終結論を含めて独立して解決できる水準"
+  },
+  {
+    "unitId": "EQU",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "方法指定なしの統合問題を、根拠と最終結論を含めて独立して解決できる水準"
+  },
+  {
+    "unitId": "FUN",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "方法指定なしの統合問題を、根拠と最終結論を含めて独立して解決できる水準"
+  },
+  {
+    "unitId": "HSX",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "進研模試の該当大問で最終小問まで実戦対応できる水準（問題の校正は第2段階）"
+  },
+  {
+    "unitId": "QEQ",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "進研模試の該当大問で最終小問まで実戦対応できる水準（問題の校正は第2段階）"
+  },
+  {
+    "unitId": "QFN",
+    "requiredSuccesses": 3,
+    "validityDays": 7,
+    "dailyLimit": 1,
+    "standard": "進研模試の該当大問で最終小問まで実戦対応できる水準（問題の校正は第2段階）"
+  }
+]

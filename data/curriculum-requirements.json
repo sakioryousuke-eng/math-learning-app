@@ -1,0 +1,146 @@
+{
+  "CAL": [],
+  "EXP": [
+    "CAL"
+  ],
+  "EQU": [
+    "EXP"
+  ],
+  "FUN": [
+    "EQU"
+  ],
+  "HSX": [
+    "FUN"
+  ],
+  "QEQ": [
+    "HSX"
+  ],
+  "QFN": [
+    "QEQ"
+  ],
+  "MGEO": [
+    "EQU",
+    "HSX"
+  ],
+  "MCOUNT": [
+    "CAL"
+  ],
+  "MSTAT": [
+    "CAL"
+  ],
+  "SET": [
+    "HSX"
+  ],
+  "TRATIO": [
+    "HSX",
+    "MGEO"
+  ],
+  "COUNT": [
+    "MCOUNT",
+    "HSX"
+  ],
+  "PROB": [
+    "COUNT"
+  ],
+  "DATA": [
+    "MSTAT",
+    "HSX"
+  ],
+  "INT": [
+    "EQU"
+  ],
+  "GEO": [
+    "MGEO"
+  ],
+  "ALG": [
+    "HSX",
+    "COUNT"
+  ],
+  "CEQ": [
+    "QEQ",
+    "ALG"
+  ],
+  "COORD": [
+    "QFN",
+    "MGEO"
+  ],
+  "TRIG": [
+    "TRATIO",
+    "QFN"
+  ],
+  "EXPON": [
+    "QFN"
+  ],
+  "LOG": [
+    "EXPON"
+  ],
+  "DIFF2": [
+    "QFN",
+    "ALG"
+  ],
+  "INT2": [
+    "DIFF2"
+  ],
+  "SEQ": [
+    "HSX"
+  ],
+  "REC": [
+    "SEQ"
+  ],
+  "INDUCT": [
+    "REC",
+    "SET"
+  ],
+  "INFER": [
+    "DATA",
+    "PROB"
+  ],
+  "VEC": [
+    "TRATIO",
+    "COORD"
+  ],
+  "PVEC": [
+    "VEC",
+    "GEO"
+  ],
+  "SVEC": [
+    "VEC"
+  ],
+  "LIMIT": [
+    "REC",
+    "TRIG",
+    "LOG"
+  ],
+  "DIFF3": [
+    "LIMIT",
+    "DIFF2"
+  ],
+  "INT3": [
+    "DIFF3",
+    "INT2"
+  ],
+  "CPLANE": [
+    "CEQ",
+    "TRIG"
+  ],
+  "CURVE": [
+    "COORD",
+    "TRIG"
+  ],
+  "REP": [
+    "DATA",
+    "COUNT"
+  ],
+  "NUMTHEORY": [
+    "INT",
+    "INDUCT"
+  ],
+  "ODE": [
+    "INT3"
+  ],
+  "PROBLIMIT": [
+    "PROB",
+    "REC",
+    "LIMIT"
+  ]
+}

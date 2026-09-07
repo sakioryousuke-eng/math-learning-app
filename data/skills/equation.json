@@ -1,0 +1,43 @@
+[
+  {
+    "id": "EQU1",
+    "unitId": "EQU",
+    "name": "等式と同値変形",
+    "prerequisites": [
+      "EXP3"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "EQU2",
+    "unitId": "EQU",
+    "name": "一次方程式",
+    "prerequisites": [
+      "EQU1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "EQU3",
+    "unitId": "EQU",
+    "name": "条件の数学化",
+    "prerequisites": [
+      "EQU2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "path": "src/math-master/diagnosis.ts",
+    "sha256": "4d8b5761b3b2dc93d2362c83bd0dabf676a9f53e24eb266e3c32f314c8fb832a"
+  },
+  {
+    "path": "src/math-master/learner.ts",
+    "sha256": "42c232b78fd637fabfdbb622578c6456a1774b575963a0187f34d3b9095c18f4"
+  },
+  {
+    "path": "src/math-master/load.ts",
+    "sha256": "8376bbb565b088b5d0ff83102402dee8d4d96465913fd0982c365452ee13f81f"
+  },
+  {
+    "path": "src/math-master/max.ts",
+    "sha256": "20deea16ba4c53075a9e1dc52de7c28540a1e33e08dd0d7137171404f91ff1d0"
+  },
+  {
+    "path": "src/math-master/repair.ts",
+    "sha256": "66eb2b4564aa8081c970fdfd0ab25b88f9448f7491222ce4273aa0f6fc61a16b"
+  },
+  {
+    "path": "src/math-master/types.ts",
+    "sha256": "43b8c27e31593507132a1765a13ab20d2e5d097ae24bf673b1987589d92ab766"
+  },
+  {
+    "path": "src/math-master/unlock.ts",
+    "sha256": "2ab6193b8f3dc67f11c130c3c5d669cd110874fe7e4abef45e5565adac356486"
+  },
+  {
+    "path": "src/math-master/validate.ts",
+    "sha256": "5467cda52802ae1f6011d86359d0248a389d74a90c5a468f7c8e3419aeea6e80"
+  },
+  {
+    "path": "src/learning/task-selector.ts",
+    "sha256": "3707689e2bc3247f65a01aee04e6862ef92040f51219c61d1d7964fa65be6da8"
+  },
+  {
+    "path": "data/units.json",
+    "sha256": "647d607a09322b3a3fb68bfad2c6bc85fac3c45280c2b250f5d222cbc5054c6b"
+  },
+  {
+    "path": "data/skills/calculation.json",
+    "sha256": "5512c96881883dd02c30e429399ebfe29409ce0b822252851f7b35edfe4072e6"
+  },
+  {
+    "path": "data/skills/equation.json",
+    "sha256": "d4348b45364ea7234573dbc441c98cf4720fe859848df8e4a2c43a030fc843a7"
+  },
+  {
+    "path": "data/skills/expression.json",
+    "sha256": "6e4bbee7db75ca0bd3eb4de1445e8ee6c0721c2aceea96ad4285fc4c8c779350"
+  },
+  {
+    "path": "data/skills/function.json",
+    "sha256": "5bed4c85accc4b0a557c495c50d84b19b0f8eb2c4bce8f84e312cadfe94f1735"
+  },
+  {
+    "path": "data/skills/numbers-expressions.json",
+    "sha256": "462942a06b1fee47666de21a108d6d427b571773cc540f61bd7dc57bd682d428"
+  },
+  {
+    "path": "data/skills/quadratic-equation.json",
+    "sha256": "14459412ad716cfd8467d3f7eb525297ee649ecabe19930d4eba9ea4b0b73cd3"
+  },
+  {
+    "path": "data/skills/quadratic-function.json",
+    "sha256": "4235fba5410aaff14d74156e53b19e0019e42f0f724d367697111cb0ef4aa51d"
+  },
+  {
+    "path": "data/max-definitions.json",
+    "sha256": "680cdeb187aedc12adf7440bc5b8bf2302ea0539ca5f06e41f44e2a873c69555"
+  },
+  {
+    "path": "data/cross-skills.json",
+    "sha256": "da9ee65131adedff438007ec167ad85329149bb7a2ab41b13459fc08b1d75915"
+  },
+  {
+    "path": "tests/core.test.ts",
+    "sha256": "b95f8cd2ae44c89531120f804a2926d74074fefe98f97ceadbe3c02271064d54"
+  },
+  {
+    "path": "tests/boundaries.test.ts",
+    "sha256": "f8e1c60a3bfa87fb8dc116c713a361de507424ce6669f9d4c40ee859d41c520d"
+  }
+]

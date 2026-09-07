@@ -1,0 +1,41 @@
+[
+  {
+    "id": "CAL1",
+    "unitId": "CAL",
+    "name": "符号と四則",
+    "prerequisites": [],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "CAL2",
+    "unitId": "CAL",
+    "name": "分数の計算",
+    "prerequisites": [
+      "CAL1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "CAL3",
+    "unitId": "CAL",
+    "name": "計算の統合",
+    "prerequisites": [
+      "CAL2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

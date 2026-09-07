@@ -1,0 +1,43 @@
+[
+  {
+    "id": "EXP1",
+    "unitId": "EXP",
+    "name": "文字式の整理",
+    "prerequisites": [
+      "CAL3"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "EXP2",
+    "unitId": "EXP",
+    "name": "分配法則と展開",
+    "prerequisites": [
+      "EXP1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "EXP3",
+    "unitId": "EXP",
+    "name": "式変形の統合",
+    "prerequisites": [
+      "EXP2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

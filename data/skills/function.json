@@ -1,0 +1,43 @@
+[
+  {
+    "id": "FUN1",
+    "unitId": "FUN",
+    "name": "変数と対応・定義域",
+    "prerequisites": [
+      "EQU3"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "FUN2",
+    "unitId": "FUN",
+    "name": "一次関数とグラフ",
+    "prerequisites": [
+      "FUN1"
+    ],
+    "crossSkillIds": [
+      "X04",
+      "X05",
+      "X08"
+    ]
+  },
+  {
+    "id": "FUN3",
+    "unitId": "FUN",
+    "name": "関数の表現変換",
+    "prerequisites": [
+      "FUN2"
+    ],
+    "crossSkillIds": [
+      "X02",
+      "X06",
+      "X11",
+      "X12",
+      "X13"
+    ]
+  }
+]

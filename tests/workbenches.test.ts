@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {simulateBinomial} from '../src/curriculum/workbenches.ts';
+test('offline simulation is deterministic, bounded and approximates sampling variation',()=>{const input={trials:100,probability:0.5,repetitions:1000,seed:42},s=simulateBinomial(input);assert.deepEqual(s,simulateBinomial(input));assert.ok(Math.abs(s.mean-50)<1);assert.ok(s.empiricalStandardError>0.04&&s.empiricalStandardError<0.06);assert.equal(s.theoreticalStandardError,0.05);assert.ok(s.counts.every(n=>Number.isInteger(n)&&n>=0&&n<=100));});
+test('simulation handles endpoint probabilities and rejects invalid or unbounded work',()=>{assert.equal(simulateBinomial({trials:10,probability:0,repetitions:3,seed:1}).mean,0);assert.equal(simulateBinomial({trials:10,probability:1,repetitions:3,seed:1}).mean,10);for(const p of [-1,NaN,2])assert.throws(()=>simulateBinomial({trials:10,probability:p,repetitions:3,seed:1}));assert.throws(()=>simulateBinomial({trials:1000000,probability:0.5,repetitions:2,seed:1}));});
