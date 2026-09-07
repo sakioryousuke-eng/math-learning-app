@@ -1,4 +1,6 @@
 import {profileLabels} from '../services/learning-service.ts';
+import {verificationStates} from '../application/verification.ts';
+import type {VerificationState} from '../application/verification.ts';
 import type {Profile} from '../services/learning-service.ts';
 import {reviewedCurriculum as curriculum,steps} from '../curriculum/quadratic.ts';
 import {lessonPanel} from './quadratic-view.ts';
@@ -14,7 +16,10 @@ import {LearningApplication} from '../application/learning-application.ts';
 import {IndexedDbLearningRepository} from '../persistence/indexeddb-repository.ts';
 import {evidenceDeadline} from '../application/clock.ts';
 import {GradingError} from '../grading/schema.ts';
-const devMode=(import.meta.env.DEV||import.meta.env.MODE==='demo')&&new URLSearchParams(location.search).get('demo')!=='off';
+const verifyQuery=new URLSearchParams(location.search).get('verify');
+let verifyEnabled=false;
+try{if(verifyQuery==='on'||verifyQuery==='off')localStorage.setItem('math-learning-verify',verifyQuery);verifyEnabled=localStorage.getItem('math-learning-verify')==='on';}catch{verifyEnabled=verifyQuery==='on';}
+const devMode=verifyQuery!=='off'&&(verifyEnabled||((import.meta.env.DEV||import.meta.env.MODE==='demo')&&new URLSearchParams(location.search).get('demo')!=='off'));
 const learning=new LearningApplication(new IndexedDbLearningRepository(),undefined,devMode,curriculum);
 const service=learning.service;
 let ready=false,saving=false;
@@ -26,7 +31,7 @@ const skillName=(id:string|null)=>master.skills.find(s=>s.id===id)?.name??'次�
 const button=(label:string,action:string,secondary=false,disabled=false)=>`<button class="${secondary?'secondary':'primary'}" data-action="${action}" ${disabled?'disabled':''}>${label}</button>`;
 const symbols:Record<Rating,string>={success:'○',partial:'△',failure:'×',unobserved:'—'};
 const dimensions:Record<Dimension,string>={understanding:'問題理解',modeling:'数学化',method:'着眼・方針',conditions:'条件・場合分け',calculation:'変形・計算',expression:'答案表現',conclusion:'結論・検証'};
-let error='',detailsUnit:string|null=null,devOpen=false;
+let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on';
 const openWorlds=new Map<string,boolean>();
 let realMode=false,realBusy=false,selectedImage:Awaited<ReturnType<typeof fileToImage>>|null=null;
 let generation=0,controller:AbortController|null=null;
@@ -51,7 +56,7 @@ function render(){
  const stableCount=master.skills.filter(x=>!curriculum.retiredSkillIds?.includes(x.id)&&x.unitId===p.activeUnit&&p.skills[x.id]==='stable').length;
  const unitSkills=master.skills.filter(x=>!curriculum.retiredSkillIds?.includes(x.id)&&x.unitId===p.activeUnit).length;
  const profileOptions=Object.entries(profileLabels).map(([id,label])=>`<option value="${id}" ${learning.namespace==='demo:'+id?'selected':''}>${label}</option>`).join('');
- const dev=devMode?`<details class="dev" ${devOpen?'open':''}><summary>開発確認 <span>仮答案・デモユーザー</span></summary><div class="dev-content"><label for="profile">確認する状態</label><select id="profile"><option value="student" ${learning.namespace==='student:local'?'selected':''}>通常学習（保存して再開）</option>${profileOptions}</select><div class="dev-date"><span>開発時計 <b>${esc(s.now.slice(0,10))}</b></span><button data-action="day" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>翌日へ</button><button data-action="week" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>8日後へ</button></div><p>通常学習とデモは別々に保存します。再読み込み後も続きから再開します。画像AI採点は未接続です。</p>${button('次回起動を確認','session',true,!p.diagnosticCompleted)}${button('このデモを初期化','reset-demo',true,!learning.namespace.startsWith('demo:'))}<label for="grading-problem">実答案の実証問題（専用デモ）</label><select id="grading-problem">${gradingSpecs.map(g=>`<option value="${esc(g.problemId)}">${esc(g.problemId)}</option>`).join('')}</select>${button('実証問題を開く','grading-demo',true)}</div></details>`:'';
+ const dev=devMode?`<details class="dev" ${devOpen?'open':''}><summary>開発確認 <span>仮答案・デモユーザー</span></summary><div class="dev-content"><label for="verify-state">検証する状態</label><select id="verify-state">${Object.entries(verificationStates).map(([id,label])=>`<option value="${id}" ${learning.namespace===`demo:verify:${id}`?'selected':''}>${label}</option>`).join('')}</select>${button('この状態を開く','verify-state',true)}<p>選択した検証デモを開始状態から開きます。</p>${button('検証モードをOFF','verify-off',true)}<label for="profile">確認する状態</label><select id="profile"><option value="student" ${learning.namespace==='student:local'?'selected':''}>通常学習（保存して再開）</option>${profileOptions}</select><div class="dev-date"><span>開発時計 <b>${esc(s.now.slice(0,10))}</b></span><button data-action="day" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>翌日へ</button><button data-action="week" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>8日後へ</button></div><p>通常学習とデモは別々に保存します。再読み込み後も続きから再開します。画像AI採点は未接続です。</p>${button('次回起動を確認','session',true,!p.diagnosticCompleted)}${button('このデモを初期化','reset-demo',true,!learning.namespace.startsWith('demo:'))}<label for="grading-problem">実答案の実証問題（専用デモ）</label><select id="grading-problem">${gradingSpecs.map(g=>`<option value="${esc(g.problemId)}">${esc(g.problemId)}</option>`).join('')}</select>${button('実証問題を開く','grading-demo',true)}</div></details>`:'';
  const label=s.current?.context==='max'?'MAX挑戦':s.current?.context==='repair'?'武器を整備中':s.current?.context==='warmup'?'前回確認':s.current?.context==='diagnostic'?'初回診断':'今日の課題';
  const ancestorIds=(id:string):string[]=>master.skills.find(x=>x.id===id)!.prerequisites.flatMap(pre=>[pre,...ancestorIds(pre)]);
  const repairChoices=s.problem?[...new Set(ancestorIds(s.problem.skillId))].filter(id=>curriculum.problems.some(p=>p.skillId===id&&p.reviewStatus==='reviewed')):[];
@@ -111,6 +116,8 @@ app.addEventListener('click',e=>{
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='verify-off'){const url=new URL(location.href);url.searchParams.set('verify','off');location.assign(url);return;}
+ if(action==='verify-state'){const state=app.querySelector<HTMLSelectElement>('#verify-state')!.value as VerificationState;void act(()=>{},()=>learning.useVerification(state));return;}
  if(action==='reset-demo'){void act(()=>{},()=>learning.resetDemo());return;}
  if(action==='session'){location.reload();return;}
  if(action==='grading-demo'){const id=app.querySelector<HTMLSelectElement>('#grading-problem')!.value;void act(()=>{},()=>learning.useGradingDemo(id));return;}

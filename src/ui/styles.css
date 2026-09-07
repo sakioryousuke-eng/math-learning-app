@@ -7,3 +7,5 @@
 .curriculum-route li::after { display: none; }
 
 .panel figure{margin:1rem 0}.panel figure svg{display:block;width:100%;height:auto}.panel figcaption{font-size:.8rem;line-height:1.7;margin-top:.5rem}
+
+.dev select{min-width:0;width:100%;max-width:100%;text-overflow:ellipsis}.dev-content>button{min-height:48px}.dev summary{min-height:44px}

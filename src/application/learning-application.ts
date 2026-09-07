@@ -1,4 +1,6 @@
 import {LearningService} from '../services/learning-service.ts';
+import {seedVerification} from './verification.ts';
+import type {VerificationState} from './verification.ts';
 import type {Profile} from '../services/learning-service.ts';
 import type {LearningRepository} from '../persistence/repository.ts';
 import {curriculumVersion,decodeDocument,PersistenceError} from '../persistence/model.ts';
@@ -80,7 +82,8 @@ export class LearningApplication {
   }catch(e){this.service.restoreCheckpoint(before);throw e;}
  });}
  async useStudent(){await this.exclusive(()=>this.open('student:local'));}
+ async useVerification(state:VerificationState){if(!this.development)throw new PersistenceError('MODE','開発モード専用です。');await this.exclusive(()=>this.open(`demo:verify:${state}`,()=>seedVerification(this.service,this.catalog,state),true));}
  async useDemo(profile:Profile){if(!this.development)throw new PersistenceError('MODE','開発モード専用です。');await this.exclusive(()=>this.open(`demo:${profile}`,()=>this.service.switchProfile(profile)));}
  async useGradingDemo(id:string){if(!this.development)throw new PersistenceError('MODE','開発モード専用です。');await this.exclusive(()=>this.open(`demo:grading:${id}`,()=>this.service.openGradingDemo(id)));}
- async resetDemo(){if(!this.development||!this.namespace.startsWith('demo:'))throw new PersistenceError('MODE','通常学習はこの操作では初期化できません。');const key=this.namespace;await this.exclusive(()=>this.open(key,()=>{if(key.startsWith('demo:grading:'))this.service.openGradingDemo(key.slice('demo:grading:'.length));else this.service.switchProfile(key.slice(5) as Profile);},true));}
+ async resetDemo(){if(!this.development||!this.namespace.startsWith('demo:'))throw new PersistenceError('MODE','通常学習はこの操作では初期化できません。');const key=this.namespace;await this.exclusive(()=>this.open(key,()=>{if(key.startsWith('demo:verify:'))seedVerification(this.service,this.catalog,key.slice('demo:verify:'.length) as VerificationState);else if(key.startsWith('demo:grading:'))this.service.openGradingDemo(key.slice('demo:grading:'.length));else this.service.switchProfile(key.slice(5) as Profile);},true));}
 }
