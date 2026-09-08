@@ -18,3 +18,8 @@
 .bank-review label {display:block;margin:12px 0}
 .bank-review select {display:block;width:100%;min-width:0;max-width:100%;min-height:44px}
 .bank-json {white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;font-size:.8rem}
+.tratio-figure {margin:14px 0;min-width:0}
+.tratio-figure svg {display:block;width:100%;max-width:440px;height:auto;margin:auto}
+.tratio-figure svg text {font-size:12px;fill:#244353}
+.tratio-figure input[type=range] {width:100%;min-height:44px}
+.tratio-figure figcaption {font-size:.85rem;line-height:1.6}

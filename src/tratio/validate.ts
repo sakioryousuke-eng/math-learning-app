@@ -1,0 +1,6 @@
+import type {TratioLesson} from './types.ts';
+import {distance} from './math.ts';
+export const equivalent=(a:(number|null)[],b:(number|null)[])=>a.length===b.length&&a.every((v,i)=>v===null?b[i]===null:b[i]!==null&&Math.abs(v-b[i]!)<1e-8);
+export function validateTratio(lessons:TratioLesson[]){for(const l of lessons){const fail=(s:string)=>{throw new Error(l.problem.id+': '+s);};if(!equivalent(l.expected,l.compute()))fail('独立計算との不一致');if(l.choices.length!==4||l.choices.filter(c=>c.correct).length!==1)fail('4択不正');for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)if(equivalent(l.choices[i].values,l.choices[j].values)||l.choices[i].text===l.choices[j].text)fail('同値選択肢');if(l.choices.some(c=>!c.correct&&!c.hypothesis))fail('誤答根拠なし');if(l.step===4&&/定理を使|定理を用|三平方を使/.test(l.problem.prompt))fail('方法指定');if(!l.problem.examAnswer||l.working.length<3||l.requirements.length===0)fail('解説不足');
+ if(l.figure?.kind==='polygon'){const f=l.figure,points=f.points??[];if(new Set(points.map(p=>p.name)).size!==points.length||points.some(p=>p.xy.some(v=>!Number.isFinite(v))))fail('図の点');for(const [a,b] of [...f.edges??[],...f.auxiliary??[]]){const p=points.find(p=>p.name===a),q=points.find(p=>p.name===b);if(!p||!q||distance(p.xy,q.xy)<1e-9)fail('図の辺');}}
+ }return lessons.map(l=>({id:l.problem.id,oracle:l.compute(),passed:true}));}

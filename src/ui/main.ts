@@ -4,8 +4,11 @@ import {renderIntegratedPrototype,bindIntegratedPrototype} from './integrated-fa
 import {renderAxisPrototype,bindAxisPrototype} from './axis-family-prototype.ts';
 import {renderFamilyPrototype,bindFamilyPrototype} from './family-prototype.ts';
 import {paperSubmission,toPaperChecks,backPaperChoices,paperInput} from './paper-submission.ts';
-import {bankCurriculum as curriculum,bankById} from '../bank/catalog.ts';
-import {allPaperSpecs as paperSpecs} from '../bank/paper.ts';
+import {bankById} from '../bank/catalog.ts';
+import {tratioCurriculum as curriculum,appPaperSpecs as paperSpecs} from '../tratio/catalog.ts';
+import {tratioById,tratioSteps} from '../tratio/lessons.ts';
+import {renderTratio,bindTratio,selectedTratio,tratioExplanation,tratioSupport,tratioDetails} from '../tratio/view.ts';
+import {bindCircle} from '../tratio/figures.ts';
 import {verifiedGenerated} from '../learning/material-policy.ts';
 import {bankExplanation,bankDetails,bindBankGraph,renderBank,bindBank} from './qfn-bank.ts';
 import {bindDynamicQuadratic} from './dynamic-quadratic.ts';
@@ -46,6 +49,7 @@ const symbols:Record<Rating,string>={success:'○',partial:'△',failure:'×',un
 const dimensions:Record<Dimension,string>={understanding:'問題理解',modeling:'数学化',method:'着眼・方針',conditions:'条件・場合分け',calculation:'変形・計算',expression:'答案表現',conclusion:'結論・検証'};
 let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false,axisFamilyOpen=false,countFamilyOpen=false,placementFamilyOpen=false,integratedFamilyOpen=false;
 let bankOpen=false;
+let tratioOpen=false;
 const openWorlds=new Map<string,boolean>();
 let realMode=false,realBusy=false,selectedImage:Awaited<ReturnType<typeof fileToImage>>|null=null;
 let generation=0,controller:AbortController|null=null;
@@ -111,11 +115,17 @@ function render(){
  }
  if(s.problem&&paperSpecs[s.problem.id]&&s.current?.context!=='diagnostic'){
   if(s.screen==='problem')content=content.replace('仮答案を提出する','紙答案の最終結果を提出する').replace('紙の答案と解説を照合して仮採点を選びます。AIによる実答案評価は未接続です。','紙に自由記述で解いてから、最終結論を選択して提出します。');
-  if(s.screen==='submission'&&!realMode)content=paperSubmission(s.problem.id,s.realToken,s.current?.context==='max');
+  if(s.screen==='submission'&&!realMode)content=paperSubmission(s.problem.id,s.realToken,s.current?.context==='max',paperSpecs);
   if(s.screen==='result'&&s.result?.assessment.choice){const record=s.result.assessment.choice;content=content.replace('✓ 正解',s.current?.context==='max'?'✓ 完全合格':'✓ 最終結論は正しい');content+=`<p class="notice">最終結論は選択内容から判定しました。根拠・条件などは本人の自己申告であり、アプリが紙答案を読んだ判定ではありません。</p>${record.missing.length?`<p>未確認：${record.missing.map(id=>esc(paperSpecs[s.problem!.id].checks.find(c=>c.id===id)?.label??id)).join('／')}</p>`:''}`;}
  }
  if(s.screen==='max'&&s.unitId==='QFN')content=`<h1>二次関数 MAX</h1><section class="max-card"><h2>1題を紙に解き切る</h2><p>6択で最終結論を提出し、紙答案の必須要素を確認します。</p><p>最終結論が正しく、必須答案要素がすべて揃った1回の成功でMAXを取得します。</p><p>3回成功・7日以内・1日1回の制限はありません。失敗後も別の候補問題へ再挑戦できます。</p></section>${button('MAX問題に挑戦','start-max',false,!!s.current&&!s.result)}<p>紙の根拠・条件・可読性は自己申告で確認します。3題は独立した候補問題です。</p>`;
  const bankProblem=s.problem?bankById.get(s.problem.id):undefined;
+ const tratioLesson=s.problem?tratioById.get(s.problem.id):undefined;
+ if(tratioLesson&&s.screen==='problem')content=content.replace('<section class="problem-paper">',tratioSupport(tratioLesson)+'<section class="problem-paper">');
+ if(tratioLesson&&s.screen==='explanation')content=`<h1>答えと解説</h1>${tratioExplanation(tratioLesson)}${button(s.result?.repaired?'元問題へ戻る':'次へ','next')}`;
+ if(verifyEnabled&&tratioLesson&&s.result&&['result','explanation'].includes(s.screen))content+=tratioDetails(tratioLesson,s.result.assessment.choice?.choiceId);
+ if(s.screen==='home'&&p.activeUnit==='TRATIO')content+=`<section class="panel"><h2>三角比の4STEP</h2><ol>${tratioSteps.map(t=>`<li>${t.number} ${esc(t.title)}</li>`).join('')}</ol></section>`;
+ if(s.screen==='max'&&s.unitId==='TRATIO')content='<h1>三角比 MAX</h1><p>新しい固定候補3題は現在、難度・所要時間の確認段階です。通常のMAX判定にはまだ接続していません。技能のstableは保持しています。</p><p>三角関数はQFN MAXとTRATIO MAXの両方が必要です。</p>'+(verifyEnabled?button('MAX原型を含む三角比教材を確認','tratio-open',true):'');
  if(s.screen==='explanation'&&s.problem?.skillId.startsWith('QF-')&&s.result&&s.result.outcome!=='prerequisite')content=`<h1>答えと解説</h1>${bankProblem?bankExplanation(bankProblem):quadraticExplanation(s.problem)}${button(p.repair?'必要な技能へ':s.result.repaired?'元問題へ復帰':'次へ','next')}`;
  if(verifyEnabled&&bankProblem&&s.result&&['result','explanation'].includes(s.screen))content+=bankDetails(bankProblem,s.result.assessment.choice?.choiceId);
  if(s.screen==='max'&&p.activeUnit==='QFN'&&master.skills.filter(x=>x.unitId==='QFN'&&!curriculum.retiredSkillIds?.includes(x.id)).every(x=>p.skills[x.id]==='stable'))content+=button('MAX前の総合練習','prepare-qfn',true,!!s.current&&!s.result);
@@ -128,10 +138,13 @@ function render(){
  if(verifyEnabled&&placementFamilyOpen)content=renderPlacementPrototype();
  if(verifyEnabled&&integratedFamilyOpen)content=renderIntegratedPrototype();
  if(verifyEnabled&&bankOpen)content=renderBank();
+ if(verifyEnabled&&tratioOpen)content=renderTratio();
  app.innerHTML=`<header class="site-header"><div class="brand"><span class="brand-icon">∑</span><span>数学の道<small>二次関数 · 教材検証版</small></span></div><span class="header-badge">${learning.namespace.startsWith('demo:')?'DEMO':'LOCAL'}</span></header><div class="shell">${dev}<p class="status-message" role="status">${saving?'保存中…':'端末に保存済み'} · ${learning.namespace.startsWith('demo:')?'開発デモ':'通常学習'}</p><main id="main" tabindex="-1">${error?`<div class="error" role="alert">${esc(error)}</div>`:''}${s.notice?`<p class="status-message" role="status">${esc(s.notice)}</p>`:''}${content}</main></div><nav class="bottom-nav" aria-label="メインナビ"><button data-action="home" ${s.screen==='home'||s.screen==='diagnostic'?'aria-current="page"':''}><span>⌂</span>ホーム</button><button data-action="map" ${s.screen==='map'?'aria-current="page"':''}><span>⋮</span>攻略マップ</button><button data-action="records" ${s.screen==='records'?'aria-current="page"':''}><span>▤</span>記録</button></nav>`;
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作4 2解の位置・区間条件','placement-family-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作5 二次関数・総合判断','integrated-family-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('本番問題バンク 90題を確認','bank-open',true));
+ if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('三角比 TRATIOの新教材を確認','tratio-open',true));
+ if(verifyEnabled&&tratioOpen)bindTratio(app,render);else if(tratioLesson)bindCircle(app);
  if(verifyEnabled&&bankOpen)bindBank(app,render);
  if(bankProblem&&s.screen==='explanation')bindBankGraph(app,bankProblem);
  for(const input of app.querySelectorAll<HTMLInputElement>('.image-inputs input'))input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void chooseImage(file);});
@@ -156,8 +169,12 @@ app.addEventListener('click',e=>{
  if(target.dataset.boundary!==undefined||target.dataset.boundaryIndex!==undefined||target.dataset.familyAction!==undefined||target.dataset.axisAction!==undefined||target.dataset.countAction!==undefined||target.dataset.placementAction!==undefined||target.dataset.integratedAction!==undefined)return;
  if(target.dataset.unit){detailsUnit=detailsUnit===target.dataset.unit?null:target.dataset.unit;render();return;}
  const action=target.dataset.action;
+ if(target.dataset.tratioAction!==undefined||target.dataset.tratioAngle!==undefined)return;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='tratio-open'){if(verifyEnabled){tratioOpen=true;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
+ if(action==='tratio-preview'&&verifyEnabled){const id=selectedTratio();tratioOpen=false;void act(()=>{},()=>learning.useReviewedPreview(id,false));return;}
+ if(tratioOpen)tratioOpen=false;
  if(action==='bank-open'){if(verifyEnabled){bankOpen=true;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(action==='bank-preview'&&verifyEnabled){const id=app.querySelector<HTMLSelectElement>('#bank-problem')!.value;bankOpen=false;void act(()=>{},()=>learning.useReviewedPreview(id,false));return;}
  if(bankOpen)bankOpen=false;

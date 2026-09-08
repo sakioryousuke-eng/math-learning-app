@@ -2,6 +2,7 @@ import {legacyCatalog} from './catalog.ts';
 import {choiceAssessment} from '../grading/paper-choices.ts';
 import {allPaperSpecs as paperSpecs,generatedEvidence} from '../bank/paper.ts';
 import {selectQfnPractice} from '../bank/selector.ts';
+import {tratioById} from '../tratio/lessons.ts';
 import type {LearningCatalog} from '../curriculum/types.ts';
 import type {Problem} from './catalog.ts';
 import {gradeMock,causes} from './mock-grader.ts';
@@ -170,16 +171,29 @@ export class LearningService {
   }
   submitChoice(choiceId:string,confirmed:string[]){
     if(!this.catalog.paperChoiceGrading||!this.current||this.result||this.screen!=='submission'||this.current.context==='diagnostic')throw new Error('この答案は選択式で提出できません。');
-    const p=this.problem(this.current.problemId),spec=paperSpecs[p.id];
+    const p=this.problem(this.current.problemId),spec=this.catalog.choiceSpecs?.[p.id]??paperSpecs[p.id];
     if(!spec||!canUse(this.catalog,p,this.current.context))throw new Error('対象の検証済み教材ではありません。');
     const base=gradeMock(p,'correct',`event-${this.serial+1}`,this.now,this.current.context);
     base.independent=!this.hintedProblems.includes(p.id);
     const a=choiceAssessment(spec,choiceId,confirmed,base);
     const bankProblem=this.catalog.generatedBank?.find(b=>b.id===p.id);
     if(bankProblem)a.generatedEvidence=generatedEvidence(bankProblem,choiceId);
+    const tratio=tratioById.get(p.id),tratioChoice=tratio?.choices.find(c=>c.choiceId===choiceId);
+    if(tratioChoice){const h=tratioChoice.hypothesis;a.tratioEvidence={choiceId,mistakeType:h?.type??null,description:h?.description??null,crossSkills:h?.crossSkills??[],repairSkillId:h?.repairSkillId??null,hypothesisOnly:true};}
     if(this.current.context==='max'&&(!this.paperMax(this.master.skills.find(s=>s.id===p.skillId)!.unitId)||!['OPEN','ACTIVE'].includes(unitStatus(this.master,this.learner,'QFN'))||this.learner.activeUnit&&this.learner.activeUnit!=='QFN'))throw new Error('MAXに挑戦できる単元ではありません。');
     this.serial++;
     this.applyGrading(a.solved?'correct':a.tags.includes('case_split')?'case_split':'calculation',a,undefined,[]);
+    if(tratio&&!a.solved&&this.current.context==='practice'&&!this.learner.repair){
+      const h=a.tratioEvidence!,target=h.repairSkillId;
+      const history=this.learner.assessments.filter(x=>x.skillId===p.skillId&&x.context==='practice');
+      const recent=history.slice(history.findLastIndex(x=>x.solved)+1).slice(-4);
+      if(target&&new Set(recent.filter(x=>x.tratioEvidence?.mistakeType===h.mistakeType).map(x=>x.problemId)).size>=2){
+        // Repeated narrow hypotheses justify a short check, not a unit restart.
+        if(target!==p.skillId){for(const x of recent.filter(x=>x.tratioEvidence?.mistakeType===h.mistakeType))recordAssessment(this.master,this.learner,{...structuredClone(x),id:this.id(),skillId:target});}
+        beginRepair(this.master,this.learner,{sourceSkillId:p.skillId,repairSkillId:target,returnToSkillId:p.skillId,returnToProblemId:p.id});this.practiceFocus=null;
+        this.result!.notice='同じ対応の誤りが別問題でも見られたため、必要な部分だけ短く確認します。完了後にこの問題へ戻ります。';
+      }
+    }
     this.result!.cause=a.choice!.correct?'最終結論は正しいです。紙答案の確認項目は本人の申告として記録しました。':'選んだ最終結論は正答と一致していません。紙答案と解説を照合してください。';
     if(this.current.context==='max'){
       this.practiceFocus=null;

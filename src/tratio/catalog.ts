@@ -1,0 +1,23 @@
+import {bankCurriculum} from '../bank/catalog.ts';
+import {allPaperSpecs} from '../bank/paper.ts';
+import {ordinaryChecks} from '../grading/paper-choices.ts';
+import type {PaperSpec} from '../grading/paper-choices.ts';
+import type {Curriculum} from '../curriculum/types.ts';
+import {tratioLessons,tratioSkills,tratioSteps} from './lessons.ts';
+import {validateTratio} from './validate.ts';
+import {validateCurriculum} from '../curriculum/validate.ts';
+export const tratioAudit=validateTratio(tratioLessons);
+const normal=tratioLessons.filter(l=>l.kind!=='max-prototype');
+export const tratioPaperSpecs:Record<string,PaperSpec>=Object.fromEntries(tratioLessons.map(l=>[l.problem.id,{problemId:l.problem.id,choices:l.choices.map(c=>({choiceId:c.choiceId,text:c.text,correct:c.correct,mistakeType:c.correct?null:'condition_omission'})),checks:[...ordinaryChecks],insufficient:[]} satisfies PaperSpec]));
+export const appPaperSpecs={...allPaperSpecs,...tratioPaperSpecs};
+export const tratioCurriculum:Curriculum=structuredClone(bankCurriculum);
+tratioCurriculum.version='math-v0.7-tratio-reviewed';
+tratioCurriculum.retiredSkillIds=[...tratioCurriculum.retiredSkillIds??[],...tratioCurriculum.master.skills.filter(s=>s.unitId==='TRATIO').map(s=>s.id)];
+for(const [id,name,prerequisites] of tratioSkills){const crossSkillIds=[...new Set(normal.filter(l=>l.problem.skillId===id).flatMap(l=>l.requirements.flatMap(r=>r.crossSkills)))];tratioCurriculum.master.skills.push({id,name,unitId:'TRATIO',prerequisites,crossSkillIds});tratioCurriculum.skills.push({skillId:id,introduction:id==='TR-UNIT'?'direct':'need_driven',coverage:[name],phase:id==='TR-INTEGRATE'?'integration':'selection',crossSkillIds});}
+tratioCurriculum.problems.push(...normal.map(l=>l.problem));
+tratioCurriculum.lessonMetadata!.push(...normal.map(l=>({problem:l.problem,step:l.step,situation:l.problem.id,roles:l.kind==='repair'?['repair' as const]:l.problem.skillId==='TR-SINE'?['basic' as const]:['basic' as const,'repair' as const],review:{status:'reviewed' as const,method:'新規条件から座標・角・辺・面積を独立計算。docs/tratio.md参照。',checks:l.review.checks}})));
+tratioCurriculum.problemGuides.push(...normal.map(l=>({problemId:l.problem.id,roles:tratioCurriculum.lessonMetadata!.find(m=>m.problem.id===l.problem.id)!.roles,hideMethodLabel:l.step===4||(l.step===3&&l.problem.id!=='TR-SINE-R1-1'&&l.problem.id!=='TR-COSINE-R1-1'),reviewStatus:'reviewed' as const})));
+for(const [id] of tratioSkills)tratioCurriculum.stablePolicies![id]={minimum:2,situations:2,dimensions:['method','conditions','calculation','conclusion']};
+const guide=tratioCurriculum.units.find(u=>u.unitId==='TRATIO')!;guide.coverage=tratioSteps.map(s=>s.title);guide.entry='角と長さを結ぶため、単位円を基準にsin・cosを定義し、一般の三角形へ進む。';
+tratioCurriculum.choiceSpecs=appPaperSpecs;
+validateCurriculum(tratioCurriculum);
