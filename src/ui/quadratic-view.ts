@@ -1,4 +1,5 @@
 import type {ReviewedLesson,GraphSpec} from '../curriculum/quadratic.ts';
+import {placement} from './quadratic-copy.ts';
 const esc=(v:string)=>v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function graphSvg(g:GraphSpec){
  const [l,r,b,t]=g.view,W=420,H=260;
@@ -14,5 +15,7 @@ export function graphSvg(g:GraphSpec){
 export function lessonPanel(l:ReviewedLesson|undefined,shown:boolean){
  if(!l||l.step===0||l.step===5||l.problem.purpose==='max')return '';
  const intro=l.introduction;
- return `<section class="panel"><p>STEP ${l.step} · 図と式を対応させる</p>${intro?`<p>${esc(intro.trial)}</p>${shown?`<p>${esc(intro.need)}</p><p>${esc(intro.tool)}</p><p>${esc(intro.returnToProblem)}</p><p>説明を見た問題は、独立した成功の回数に含めません。</p>`:'<button class="secondary" data-action="introduction">道具の説明を読む</button>'}`:''}${l.graph?`<details><summary>グラフを作業台にする</summary>${l.graph.note?`<p>${esc(l.graph.note)}</p>`:''}${graphSvg(l.graph)}</details>`:''}</section>`;
+ const mode=placement(l.problem.id),canShow=l.graph&&(mode==='with-problem'||mode==='optional-hint');
+ if(!intro&&!canShow)return '';
+ return `<section class="panel">${intro?`<p>${esc(intro.trial)}</p>${shown?`<p>${esc(intro.need)}</p><p>${esc(intro.tool)}</p><p>${esc(intro.returnToProblem)}</p><p>説明を見た問題は、独立した成功の回数に含めません。</p>`:'<button class="secondary" data-action="introduction">道具の説明を読む</button>'}`:''}${canShow?(shown||mode==='with-problem'?graphSvg(l.graph!):'<button class="secondary" data-action="introduction">グラフを見る（ヒント）</button><p>ヒントを見た問題は、独立した成功の回数に含めません。</p>'):''}</section>`;
 }
