@@ -1,3 +1,4 @@
+import {renderAxisPrototype,bindAxisPrototype} from './axis-family-prototype.ts';
 import {renderFamilyPrototype,bindFamilyPrototype} from './family-prototype.ts';
 import {paperSubmission,toPaperChecks,backPaperChoices,paperInput} from './paper-submission.ts';
 import {paperCurriculum as curriculum,paperSpecs} from '../grading/paper-choices.ts';
@@ -37,7 +38,7 @@ const skillName=(id:string|null)=>master.skills.find(s=>s.id===id)?.name??'次�
 const button=(label:string,action:string,secondary=false,disabled=false)=>`<button class="${secondary?'secondary':'primary'}" data-action="${action}" ${disabled?'disabled':''}>${label}</button>`;
 const symbols:Record<Rating,string>={success:'○',partial:'△',failure:'×',unobserved:'—'};
 const dimensions:Record<Dimension,string>={understanding:'問題理解',modeling:'数学化',method:'着眼・方針',conditions:'条件・場合分け',calculation:'変形・計算',expression:'答案表現',conclusion:'結論・検証'};
-let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false;
+let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false,axisFamilyOpen=false;
 const openWorlds=new Map<string,boolean>();
 let realMode=false,realBusy=false,selectedImage:Awaited<ReturnType<typeof fileToImage>>|null=null;
 let generation=0,controller:AbortController|null=null;
@@ -62,7 +63,7 @@ function render(){
  const stableCount=master.skills.filter(x=>!curriculum.retiredSkillIds?.includes(x.id)&&x.unitId===p.activeUnit&&p.skills[x.id]==='stable').length;
  const unitSkills=master.skills.filter(x=>!curriculum.retiredSkillIds?.includes(x.id)&&x.unitId===p.activeUnit).length;
  const profileOptions=Object.entries(profileLabels).map(([id,label])=>`<option value="${id}" ${learning.namespace==='demo:'+id?'selected':''}>${label}</option>`).join('');
- const dev=devMode?`<details class="dev" ${devOpen?'open':''}><summary>開発確認 <span>仮答案・デモユーザー</span></summary><div class="dev-content">${verifyEnabled?button('生成問題ファミリー試作','family-open',true):''}${previewControls(curriculum)}<label for="verify-state">検証する状態</label><select id="verify-state">${Object.entries(verificationStates).map(([id,label])=>`<option value="${id}" ${learning.namespace===`demo:verify:${id}`?'selected':''}>${label}</option>`).join('')}</select>${button('この状態を開く','verify-state',true)}<p>選択した検証デモを開始状態から開きます。</p>${button('検証モードをOFF','verify-off',true)}<label for="profile">確認する状態</label><select id="profile"><option value="student" ${learning.namespace==='student:local'?'selected':''}>通常学習（保存して再開）</option>${profileOptions}</select><div class="dev-date"><span>開発時計 <b>${esc(s.now.slice(0,10))}</b></span><button data-action="day" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>翌日へ</button><button data-action="week" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>8日後へ</button></div><p>通常学習とデモは別々に保存します。再読み込み後も続きから再開します。画像AI採点は未接続です。</p>${button('次回起動を確認','session',true,!p.diagnosticCompleted)}${button('このデモを初期化','reset-demo',true,!learning.namespace.startsWith('demo:'))}<label for="grading-problem">実答案の実証問題（専用デモ）</label><select id="grading-problem">${gradingSpecs.map(g=>`<option value="${esc(g.problemId)}">${esc(g.problemId)}</option>`).join('')}</select>${button('実証問題を開く','grading-demo',true)}</div></details>`:'';
+ const dev=devMode?`<details class="dev" ${devOpen?'open':''}><summary>開発確認 <span>仮答案・デモユーザー</span></summary><div class="dev-content">${verifyEnabled?button('生成問題ファミリー試作','family-open',true)+button('生成問題ファミリー試作2 軸が動く最大・最小','axis-family-open',true):''}${previewControls(curriculum)}<label for="verify-state">検証する状態</label><select id="verify-state">${Object.entries(verificationStates).map(([id,label])=>`<option value="${id}" ${learning.namespace===`demo:verify:${id}`?'selected':''}>${label}</option>`).join('')}</select>${button('この状態を開く','verify-state',true)}<p>選択した検証デモを開始状態から開きます。</p>${button('検証モードをOFF','verify-off',true)}<label for="profile">確認する状態</label><select id="profile"><option value="student" ${learning.namespace==='student:local'?'selected':''}>通常学習（保存して再開）</option>${profileOptions}</select><div class="dev-date"><span>開発時計 <b>${esc(s.now.slice(0,10))}</b></span><button data-action="day" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>翌日へ</button><button data-action="week" class="small" ${s.current&&!s.result||learning.namespace==='student:local'?'disabled':''}>8日後へ</button></div><p>通常学習とデモは別々に保存します。再読み込み後も続きから再開します。画像AI採点は未接続です。</p>${button('次回起動を確認','session',true,!p.diagnosticCompleted)}${button('このデモを初期化','reset-demo',true,!learning.namespace.startsWith('demo:'))}<label for="grading-problem">実答案の実証問題（専用デモ）</label><select id="grading-problem">${gradingSpecs.map(g=>`<option value="${esc(g.problemId)}">${esc(g.problemId)}</option>`).join('')}</select>${button('実証問題を開く','grading-demo',true)}</div></details>`:'';
  const label=s.current?.context==='max'?'MAX挑戦':s.current?.context==='repair'?'武器を整備中':s.current?.context==='warmup'?'前回確認':s.current?.context==='diagnostic'?'初回診断':'今日の課題';
  const ancestorIds=(id:string):string[]=>master.skills.find(x=>x.id===id)!.prerequisites.flatMap(pre=>[pre,...ancestorIds(pre)]);
  const repairChoices=s.problem?[...new Set(ancestorIds(s.problem.skillId))].filter(id=>curriculum.problems.some(p=>p.skillId===id&&p.reviewStatus==='reviewed')):[];
@@ -112,10 +113,12 @@ function render(){
  if(s.screen==='diagnostic'&&!s.diagnosisFinished)content='<div class="notice">二次関数と必要な因数分解教材を検証しています。他単元は教材確認待ちのため、通常の初回診断は保留します。開発デモでは二次関数を確認できます。</div>'+content;
  if(p.activeUnit==='QFN'&&s.screen==='home')content+=`<section class="panel"><h2>二次関数の道順</h2><ol>${steps.map(step=>`<li>STEP ${step.number} ${esc(step.title)} (${step.skills.filter(id=>p.skills[id]==='stable').length}/${step.skills.length})</li>`).join('')}</ol></section>`;
  if(verifyEnabled&&familyOpen)content=renderFamilyPrototype();
+ if(verifyEnabled&&axisFamilyOpen)content=renderAxisPrototype();
  app.innerHTML=`<header class="site-header"><div class="brand"><span class="brand-icon">∑</span><span>数学の道<small>二次関数 · 教材検証版</small></span></div><span class="header-badge">${learning.namespace.startsWith('demo:')?'DEMO':'LOCAL'}</span></header><div class="shell">${dev}<p class="status-message" role="status">${saving?'保存中…':'端末に保存済み'} · ${learning.namespace.startsWith('demo:')?'開発デモ':'通常学習'}</p><main id="main" tabindex="-1">${error?`<div class="error" role="alert">${esc(error)}</div>`:''}${s.notice?`<p class="status-message" role="status">${esc(s.notice)}</p>`:''}${content}</main></div><nav class="bottom-nav" aria-label="メインナビ"><button data-action="home" ${s.screen==='home'||s.screen==='diagnostic'?'aria-current="page"':''}><span>⌂</span>ホーム</button><button data-action="map" ${s.screen==='map'?'aria-current="page"':''}><span>⋮</span>攻略マップ</button><button data-action="records" ${s.screen==='records'?'aria-current="page"':''}><span>▤</span>記録</button></nav>`;
  for(const input of app.querySelectorAll<HTMLInputElement>('.image-inputs input'))input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void chooseImage(file);});
  app.querySelector('details.dev')?.addEventListener('toggle',e=>{devOpen=(e.target as HTMLDetailsElement).open;});
  app.querySelector<HTMLSelectElement>('#profile')?.addEventListener('change',e=>{const value=(e.target as HTMLSelectElement).value;void act(()=>{},()=>value==='student'?learning.useStudent():learning.useDemo(value as Profile));});
+ if(verifyEnabled&&axisFamilyOpen)bindAxisPrototype(app,render,()=>{axisFamilyOpen=false;render();});
  if(verifyEnabled&&familyOpen)bindFamilyPrototype(app,render,()=>{familyOpen=false;render();});
  bindPreview(app,render); bindDynamicQuadratic(app);
  if(saving)for(const element of app.querySelectorAll<HTMLButtonElement|HTMLInputElement|HTMLSelectElement>('button,input,select'))element.disabled=true;
@@ -128,11 +131,13 @@ async function act(run:()=>void,operation?:()=>Promise<void>){
 }
 app.addEventListener('click',e=>{
  const target=(e.target as HTMLElement).closest<HTMLButtonElement>('button');if(!target||target.disabled)return;
- if(target.dataset.boundary!==undefined||target.dataset.familyAction!==undefined)return;
+ if(target.dataset.boundary!==undefined||target.dataset.familyAction!==undefined||target.dataset.axisAction!==undefined)return;
  if(target.dataset.unit){detailsUnit=detailsUnit===target.dataset.unit?null:target.dataset.unit;render();return;}
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='axis-family-open'){if(verifyEnabled){axisFamilyOpen=true;familyOpen=false;render();}return;}
+ if(axisFamilyOpen)axisFamilyOpen=false;
  if(action==='family-open'){if(verifyEnabled){familyOpen=true;render();}return;}
  if(familyOpen){familyOpen=false;}
  if(action==='paper-check'){try{toPaperChecks(app);error='';}catch(e){error=String(e);}render();return;}
