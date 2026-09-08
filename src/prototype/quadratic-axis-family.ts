@@ -65,7 +65,7 @@ export function generateAxisProblem(parameters:AxisParameters,index:number){
   candidate('case_boundary_missing',modify(rows=>rows.length? [{...rows[0],lo:null,hi:null,loClosed:false,hiClosed:false}]:rows),model.farNeeded?98:88,model.farNeeded?'左右端点が入れ替わる中点の境界を無視して同じ式を使い続ける':'軸が端点を通る境界を無視して同じ式を使い続ける'),
   candidate('case_missing',modify(rows=>rows.filter((_,i)=>i!==rows.length-1)),p.target==='both'?103:87,'右側のaの範囲を落とし、すべての実数aを覆えていない'),
   candidate('boundary_equality',modify(rows=>rows.map(r=>({...r,loClosed:false,hiClosed:false})).filter(r=>r.lo===null||r.hi===null||r.lo!==r.hi)),p.target==='both'?102:89,'境界をどのケースにも含めず、境界での答えを落とす'),
-  candidate('opening_direction_confusion',modify(rows=>rows.map(r=>({...r,polynomial:[-r.polynomial[0],-r.polynomial[1],2*p.c-r.polynomial[2]]}))),p.sign===-1?96:84,'二乗部分の符号を逆にして、開き方向と最大・最小の判断を取り違える')
+  candidate('opening_direction_confusion',axisModel({...p,sign:p.sign===1?-1:1}).answer,p.sign===-1?96:84,'開き方向を逆だと捉えたモデルで、頂点・端点の役割と場合分けを組み立て直した答案')
  ];
  const chosen:typeof candidates=[];
  const decisions=[...candidates].sort((a,b)=>b.diagnosticScore-a.diagnosticScore||a.type.localeCompare(b.type)).map(c=>{
@@ -76,7 +76,7 @@ export function generateAxisProblem(parameters:AxisParameters,index:number){
  const choices:AxisChoice[]=[{choiceId:`${id}:correct`,answer:model.answer,text:axisAnswerText(model.answer),correct:true,mistakeType:null,mistakeHypotheses:[]},...chosen.map(c=>c.choice)];
  if(choices.length!==4)throw new Error('Axis family requires three distinct diagnostic errors');
  const problemRequirements=[
-  {id:'axis_position',description:'動く軸と固定された区間の位置関係を読む',crossSkills:['X09']},
+  {id:'axis_position',description:'動く軸と固定された区間の位置関係を読む',crossSkills:[]},
   {id:'candidate_points',description:'開き方向に応じて頂点と端点を候補にする',crossSkills:['X11']},
   ...(model.farNeeded?[{id:'compare_endpoints',description:'左右端点の値を比較する',crossSkills:['X11']}]:[]),
   {id:'find_boundaries',description:'答えを決める点が変わる境界を求める',crossSkills:['X06']},
