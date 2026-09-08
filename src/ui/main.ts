@@ -1,3 +1,4 @@
+import {bindDynamicQuadratic} from './dynamic-quadratic.ts';
 import {profileLabels} from '../services/learning-service.ts';
 import {quadraticExplanation} from './quadratic-explanation.ts';
 import {previewControls,bindPreview,previewSelection} from './preview-controls.ts';
@@ -105,7 +106,7 @@ function render(){
  for(const input of app.querySelectorAll<HTMLInputElement>('.image-inputs input'))input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void chooseImage(file);});
  app.querySelector('details.dev')?.addEventListener('toggle',e=>{devOpen=(e.target as HTMLDetailsElement).open;});
  app.querySelector<HTMLSelectElement>('#profile')?.addEventListener('change',e=>{const value=(e.target as HTMLSelectElement).value;void act(()=>{},()=>value==='student'?learning.useStudent():learning.useDemo(value as Profile));});
- bindPreview(app,render);
+ bindPreview(app,render); bindDynamicQuadratic(app);
  if(saving)for(const element of app.querySelectorAll<HTMLButtonElement|HTMLInputElement|HTMLSelectElement>('button,input,select'))element.disabled=true;
 }
 async function act(run:()=>void,operation?:()=>Promise<void>){
@@ -116,6 +117,7 @@ async function act(run:()=>void,operation?:()=>Promise<void>){
 }
 app.addEventListener('click',e=>{
  const target=(e.target as HTMLElement).closest<HTMLButtonElement>('button');if(!target||target.disabled)return;
+ if(target.dataset.boundary!==undefined)return;
  if(target.dataset.unit){detailsUnit=detailsUnit===target.dataset.unit?null:target.dataset.unit;render();return;}
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}

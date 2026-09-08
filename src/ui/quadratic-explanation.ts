@@ -1,3 +1,4 @@
+import {dynamicQuadratic,dynamicSpecs} from './dynamic-quadratic.ts';
 import {lessons} from '../curriculum/quadratic.ts';
 import {answerCopy,placement} from './quadratic-copy.ts';
 import type {Problem} from '../services/catalog.ts';
@@ -46,11 +47,11 @@ set('QF-MAX',3,...[4,5,20/3,12,14].map(p=>graph(`p=${Math.round(p*100)/100}${p==
 export function quadraticExplanation(problem:Problem){
  if(!problem.skillId.startsWith('QF-'))return '';
  const copy=answerCopy[problem.id];
- const graphs=placement(problem.id)==='none'?[]:(answerGraphs[problem.id]??[]).flatMap(g=>{
+ const graphs=placement(problem.id)==='none'||dynamicSpecs[problem.id]?[]:(answerGraphs[problem.id]??[]).flatMap(g=>{
   if(!['QF-DIFFERENCE','QF-COUNT'].includes(problem.skillId)||g.curves.length<2)return [g];
   const [f,h]=g.curves,d=f.coefficients.map((v,i)=>v-h.coefficients[i]) as Polynomial;
   return [{...g,title:'A：二つの関数の共有点',curves:[f,h],caption:'共有点では同じxに対する高さが等しいので、f(x)=g(x)が成り立ちます。'},graph('B：差f(x)−g(x)とx軸',[d],g.view,'Aの共有点のx座標は、Bで差が0になるxと一致します。元の共有点の高さは、求めたxをfまたはgに戻して求めます。')];
  });
  const paragraphs=copy?.steps??problem.solution.split(/(?<=。)/).filter(Boolean);
- return `<section class="explanation quadratic-answer"><h2>考え方</h2><p>${esc(copy?.thinking??thinking[problem.skillId])}</p><h2>解き方</h2>${paragraphs.map(p=>`<p class="math-text">${esc(p)}</p>`).join('')}${graphs.length?`<h2>グラフ</h2>${graphs.length>1?'<p>それぞれの図を開き、位置関係を比べましょう。</p>':''}${graphs.map((g,i)=>graphs.length===1?explanationGraph(g):`<details class="graph-case" ${i===0?'open':''}><summary>${esc(g.title)}</summary>${explanationGraph(g)}</details>`).join('')}`:''}<h2>答え</h2><p class="answer-example">${esc(copy?.answer??problem.answer)}</p></section>`;
+ return `<section class="explanation quadratic-answer"><h2>考え方</h2><p>${esc(copy?.thinking??thinking[problem.skillId])}</p><h2>解き方</h2>${paragraphs.map(p=>`<p class="math-text">${esc(p)}</p>`).join('')}${graphs.length?`<h2>グラフ</h2>${graphs.length>1?'<p>それぞれの図を開き、位置関係を比べましょう。</p>':''}${graphs.map((g,i)=>graphs.length===1?explanationGraph(g):`<details class="graph-case" ${i===0?'open':''}><summary>${esc(g.title)}</summary>${explanationGraph(g)}</details>`).join('')}`:''}${dynamicSpecs[problem.id]?`<h2>動かして確かめる</h2>${dynamicQuadratic(problem.id)}`:''}<h2>答え</h2><p class="answer-example">${esc(copy?.answer??problem.answer)}</p></section>`;
 }
