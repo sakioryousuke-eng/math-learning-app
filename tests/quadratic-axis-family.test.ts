@@ -30,7 +30,7 @@ for(const p of axisProblems)test(`axis family ${p.index}: all cases, boundaries,
  for(const choice of p.choices){const rec=axisAttempt(p,choice.choiceId,'2026-09-08');assert.equal(rec.hypothesisOnly,true);assert.deepEqual(rec.mistakeHypotheses,choice.mistakeHypotheses);assert.equal(choice.mistakeHypotheses.length,choice.correct?0:1);}
  assert.equal(p.decisions.filter(c=>c.selected).length,3);assert.ok(p.decisions.every(c=>c.reason&&c.selectionReason));
  for(const index of [1,2,27,100]){const other=generateAxisProblem(m.parameters,index);assert.deepEqual(other.decisions.map(c=>[c.type,c.diagnosticScore,c.selected,c.choice.text]),p.decisions.map(c=>[c.type,c.diagnosticScore,c.selected,c.choice.text]));}
- const spec=axisDynamicSpec(p);assert.deepEqual(spec.boundaries,m.boundaries);
+ const spec=axisDynamicSpec(p);assert.deepEqual(spec.boundaries,m.boundaries.map(value=>({value,label:String(value)})));
  for(const b of m.boundaries){assert.equal(spec.region(b)%2,1);assert.notEqual(spec.region(b-.01),spec.region(b+.01));assert.deepEqual(spec.graph(b).curves,axisGraph(m.parameters,b).curves);}
  const result=renderAxisResult(p,p.choices[0].choiceId);assert.ok(result.includes('type="range"'));assert.ok(result.includes('parameter-line'));assert.ok(result.includes('diagnosticScore'));assert.ok(!result.includes('NaN'));
  assert.ok(p.problemRequirements.some(r=>r.crossSkills.includes('X06')));assert.ok(!paperCurriculum.problems.some(q=>q.id===p.id));
@@ -60,7 +60,7 @@ import {createHash} from 'node:crypto';
 test('axis family: correct mathematics, explanation and dynamic graphs match commit 0d5b785',()=>{
  const baseline=JSON.parse(readFileSync(new URL('./quadratic-axis-baseline.json',import.meta.url),'utf8')) as {id:string;sha256:string}[];
  const actual=axisProblems.map(p=>{
-  const snapshot={id:p.id,model:p.model,prompt:p.prompt,formula:p.formula,explanation:p.explanation,graphs:[p.model.parameters.L-1,...p.model.boundaries,p.model.parameters.R+1].map(a=>axisGraph(p.model.parameters,a)),dynamic:{...axisDynamicSpec(p),graph:undefined,region:undefined,reason:undefined}};
+  const dynamic=axisDynamicSpec(p);const snapshot={id:p.id,model:p.model,prompt:p.prompt,formula:p.formula,explanation:p.explanation,graphs:[p.model.parameters.L-1,...p.model.boundaries,p.model.parameters.R+1].map(a=>axisGraph(p.model.parameters,a)),dynamic:{...dynamic,boundaries:dynamic.boundaries.map(b=>b.value),graph:undefined,region:undefined,reason:undefined}};
   return {id:p.id,sha256:createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')};
  });assert.deepEqual(actual,baseline);
 });

@@ -5,9 +5,9 @@ import type {DynamicSpec} from './dynamic-quadratic.ts';
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const lines=(s:string)=>esc(s).replace(/\n/g,'<br>');
 export function countDynamicSpec(p:CountProblem):DynamicSpec{
- const b=p.model.boundaries.map(r=>r.value),min=(b[0]??0)-2,max=(b.at(-1)??0)+2;
- const regions=[`k＜${b[0]}`,...b.flatMap((v,i)=>[`k=${v}`,...(i<b.length-1?[`${v}＜k＜${b[i+1]}`]:[])]),`k＞${b.at(-1)}`];
- return {parameter:'k',min,max,initial:b[0]??0,boundaries:b,regions,region:k=>{for(let i=0;i<b.length;i++){if(k<b[i])return i*2;if(k===b[i])return i*2+1;}return b.length*2;},graph:k=>countGraphState(p.model.parameters,k).original,comparisonGraph:k=>countGraphState(p.model.parameters,k).difference,
+ const boundaries=p.model.boundaries.map(r=>({value:r.value,label:r.text})),values=boundaries.map(b=>b.value),min=(values[0]??0)-2,max=(values.at(-1)??0)+2;
+ const labels=boundaries.map(b=>b.label),regions=[`k＜${labels[0]}`,...labels.flatMap((v,i)=>[`k=${v}`,...(i<labels.length-1?[`${v}＜k＜${labels[i+1]}`]:[])]),`k＞${labels.at(-1)}`];
+ return {parameter:'k',min,max,initial:values[0]??0,boundaries,regions,region:k=>{for(let i=0;i<values.length;i++){if(k<values[i]-1e-10)return i*2;if(Math.abs(k-values[i])<1e-10)return i*2+1;}return values.length*2;},graph:k=>countGraphState(p.model.parameters,k).original,comparisonGraph:k=>countGraphState(p.model.parameters,k).difference,
  reason:k=>{const state=countGraphState(p.model.parameters,k);return `D=${Math.round(state.D*10000)/10000}。元の共有点も、差のグラフとx軸の共有点も${state.count}個です。${state.count===1?'D=0なので接する1点です。':state.count===0?'元の2グラフは交わらず、差のグラフもx軸と交わりません。':'図の交点のx座標が一致することを確認してください。'}`;}};
 }
 let current=0,phase:'problem'|'choices'|'result'='problem',selected='',notice='';let ordered:CountProblem['choices']=[];

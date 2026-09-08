@@ -5,10 +5,10 @@ import type {DynamicSpec} from './dynamic-quadratic.ts';
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const lines=(s:string)=>esc(s).replace(/\n/g,'<br>');
 export function axisDynamicSpec(p:AxisProblem):DynamicSpec{
- const m=p.model,{L,R}=m.parameters,w=R-L,b=m.boundaries;
- const regions=[`a＜${b[0]}`,...b.flatMap((v,i)=>[`a=${v}`,...(i<b.length-1?[`${v}＜a＜${b[i+1]}`]:[])]),`a＞${b.at(-1)}`];
- return {parameter:'a',min:L-w/2,max:R+w/2,initial:m.midpoint,boundaries:b,regions,
- region:a=>{for(let i=0;i<b.length;i++){if(a<b[i])return i*2;if(a===b[i])return i*2+1;}return b.length*2;},graph:a=>axisGraph(m.parameters,a),
+ const m=p.model,{L,R}=m.parameters,w=R-L,values=m.boundaries,boundaries=values.map(value=>({value,label:String(value)}));
+ const regions=[`a＜${values[0]}`,...values.flatMap((v,i)=>[`a=${v}`,...(i<values.length-1?[`${v}＜a＜${values[i+1]}`]:[])]),`a＞${values.at(-1)}`];
+ return {parameter:'a',min:L-w/2,max:R+w/2,initial:m.midpoint,boundaries,regions,
+ region:a=>{for(let i=0;i<values.length;i++){if(a<values[i])return i*2;if(Math.abs(a-values[i])<1e-10)return i*2+1;}return values.length*2;},graph:a=>axisGraph(m.parameters,a),
  reason:a=>{
   const state=axisState(m.parameters,a),position=state.vertexInside?'区間内':a<L?'区間の左側':'区間の右側';
   const now=(['max','min'] as const).filter(k=>m.answer[k]).map(k=>{const r=m.answer[k]!.find(r=>includesAxis(r,a))!;const point=r.point==='both'?'左右両端':r.point==='vertex'?'頂点':r.point==='left'?'左端':'右端';return `${k==='max'?'最大値':'最小値'}は約${Math.round(axisValues(m.answer,k,a)[0]*100)/100}（${point}）。現在は ${caseText(r).replaceAll('<','＜')} の場合です。`;}).join(' ');
