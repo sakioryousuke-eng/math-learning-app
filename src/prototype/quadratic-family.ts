@@ -42,6 +42,25 @@ export function familyModel(p:FamilyParameters){
   boundaries:{doubleRoot:p.c,leftEndpoint:leftValue,rightEndpoint:rightValue}
  };
 }
+
+export interface DiagnosticCandidate {key:string;choice:FamilyChoice;diagnosticScore:number;relevanceReason:string}
+export interface CandidateDecision extends DiagnosticCandidate {selected:boolean;selectionReason:string}
+export const equivalentRange=(a:KRange,b:KRange)=>a.lower===b.lower&&a.lowerClosed===b.lowerClosed&&a.upper===b.upper&&(a.upper===null||a.upperClosed===b.upperClosed);
+// Score ties use semantic keys, never a problem number or candidate array position.
+export function selectDiagnosticCandidates(correct:KRange,primary:DiagnosticCandidate[],supplement:()=>DiagnosticCandidate[]){
+ const selected:DiagnosticCandidate[]=[],decisions:CandidateDecision[]=[];
+ const consider=(candidates:DiagnosticCandidate[])=>{
+  for(const c of [...candidates].sort((a,b)=>b.diagnosticScore-a.diagnosticScore||(a.key<b.key?-1:a.key>b.key?1:0))){
+   const duplicate=selected.find(other=>equivalentRange(other.choice.range,c.choice.range));
+   const excluded=equivalentRange(correct,c.choice.range)?'正答と数学的に同値':duplicate?`採用候補「${duplicate.key}」と数学的に同値`:c.diagnosticScore<=0?'左右対称で片側だけを見る独立した誤答としての診断価値が低い':selected.length>=3?'有効な候補だが、数学的状況により上位3候補を優先':'';
+   if(!excluded)selected.push(c);
+   decisions.push({...c,selected:!excluded,selectionReason:excluded||`採用：${c.relevanceReason}`});
+  }
+ };
+ consider(primary);
+ if(selected.length<3)consider(supplement());
+ return {choices:selected.map(c=>c.choice),decisions};
+}
 export function generateFamilyProblem(p:FamilyParameters,index:number){
  const model=familyModel(p),{finalRange:r}=model,id=`QF-FAMILY-HORIZONTAL-${String(index).padStart(2,'0')}`;
  const candidate=(mistakeType:MistakeType,range:KRange):FamilyChoice=>({choiceId:`${id}:${mistakeType}`,range,text:rangeText(range),correct:false,mistakeType,mistakeHypotheses:[{choiceId:`${id}:${mistakeType}`,mistakeType,description:hypotheses[mistakeType].description,weaknessTags:[mistakeType],crossSkills:[...hypotheses[mistakeType].crossSkills],hypothesisOnly:true}]});
@@ -50,10 +69,34 @@ export function generateFamilyProblem(p:FamilyParameters,index:number){
  const equality=candidate('boundary_equality',{...r,upperClosed:!r.upperClosed});
  const farClosed=model.leftDistance>model.rightDistance?p.leftClosed:p.rightClosed;
  const one=candidate('one_root_only',{...r,upper:Math.max(model.leftValue,model.rightValue),upperClosed:farClosed});
- const candidates=model.limiting!=='both'&&index%2===0?[one,double,ignore,equality]:[ignore,double,equality,one];
- const choices:FamilyChoice[]=[{choiceId:`${id}:correct`,range:{...r},text:rangeText(r),correct:true,mistakeType:null,mistakeHypotheses:[]}];
- for(const candidate of candidates)if(choices.length<4&&!choices.some(c=>c.text===candidate.text))choices.push(candidate);
- if(choices.length!==4)throw new Error('Four distinct choices required');
+ const asymmetric=model.limiting!=='both',mixed=p.leftClosed!==p.rightClosed;
+ const boundaryScore=mixed?105:!r.upperClosed?100:85;
+ const oneScore=asymmetric?95+Math.min(4,Math.abs(model.leftDistance-model.rightDistance)/Math.min(model.leftDistance,model.rightDistance)):0;
+ const rated=(key:string,choice:FamilyChoice,diagnosticScore:number,relevanceReason:string):DiagnosticCandidate=>({key,choice,diagnosticScore,relevanceReason});
+ const primary=[
+  rated('real_root_only',ignore,90,'有限区間が指定されているため、kの下限だけで止まると両根の区間条件を落とす'),
+  rated('double_root_included',double,80,`k=${numberText(p.c)}では共有点が頂点の1点になる。「異なる2点」による重解除外を確かめる`),
+  rated('boundary_equality',equality,boundaryScore,mixed?'左右の端点の開閉が異なるため、上限を決める端点の等号を見分ける必要がある':!r.upperClosed?'開いた端点が上限を決めるため、境界値の等号を除く判断が核心になる':'上限を決める端点を含むため、上限の等号を残す判断を確かめる'),
+  rated('one_root_only',one,oneScore,asymmetric?`左右の距離が${numberText(model.leftDistance)}と${numberText(model.rightDistance)}で異なる。遠い端の条件だけでは上限が${numberText(Math.max(model.leftValue,model.rightValue))}まで広がる`:'左右の距離が等しく、片側だけの確認では独立した誤答を作りにくい')
+ ];
+ // Meaningful reserve errors combine existing misconceptions, without inventing numeric offsets.
+ const supplement=()=>{
+  const combine=(key:string,range:KRange,types:MistakeType[],score:number,reason:string)=>{
+   const choice=candidate(types[0],range);choice.choiceId=`${id}:${key}`;
+   choice.mistakeHypotheses=types.map(type=>({...candidate(type,range).mistakeHypotheses[0],choiceId:choice.choiceId}));
+   return rated(key,choice,score,reason);
+  };
+  return [
+   combine('double_and_boundary',{...r,lowerClosed:true,upperClosed:!r.upperClosed},['double_root_included','boundary_equality'],60,'重解除外と端点の等号の両方を誤る補助候補'),
+   combine('real_and_double',{...r,lowerClosed:true,upper:null,upperClosed:false},['real_root_only','double_root_included'],55,'実数解条件だけで止まり、区間条件と重解除外を落とす補助候補'),
+   // These model-derived reserves also cover future primary candidate deduplication.
+   rated('reserve_boundary',equality,50,'端点の等号だけを誤る補助候補'),
+   rated('reserve_double',double,45,'重解だけを含める補助候補'),
+   rated('reserve_interval',ignore,40,'区間条件だけを落とす補助候補')
+  ];
+ };
+ const selection=selectDiagnosticCandidates(r,primary,supplement);
+ const choices:FamilyChoice[]=[{choiceId:`${id}:correct`,range:{...r},text:rangeText(r),correct:true,mistakeType:null,mistakeHypotheses:[]},...selection.choices];
  const d=Math.min(model.leftDistance,model.rightDistance),sampleK=p.c+(d/2)**2;
  const graph:ExplanationGraph={title:`水平線 y=k の例（k=${numberText(sampleK)}）`,curves:[{formula:model.curve,coefficients:[1,-2*p.h,p.h*p.h+p.c]},{formula:`y=${numberText(sampleK)}`,coefficients:[0,0,sampleK]}],view:[p.L-1,p.R+1,p.c-1,Math.max(model.leftValue,model.rightValue)+2],domain:[p.L,p.R],openLeft:!p.leftClosed,openRight:!p.rightClosed,caption:`指定区間は${model.interval}。この図は範囲内のk=${numberText(sampleK)}の例です。共有点は(${numberText(p.h-d/2)}, ${numberText(sampleK)})と(${numberText(p.h+d/2)}, ${numberText(sampleK)})。kの全範囲は以下の条件から判断します。`};
  const boundarySource=model.limiting==='both'?'左右の端点で同じ高さになるため、両端の条件':model.limiting==='left'?'左端のほうが軸に近いため、左端の条件':'右端のほうが軸に近いため、右端の条件';
@@ -66,7 +109,7 @@ export function generateFamilyProblem(p:FamilyParameters,index:number){
   `k=${numberText(r.upper!)}では根は${numberText(p.h-d)}と${numberText(p.h+d)}になります。${r.upperClosed?'境界に来る根を含めて、両方とも指定区間内にあります。よって上限の等号を含めます。':'少なくとも一方の根が、含まない端点に来ます。よって上限の等号は含めません。'}一方、下限k=${numberText(p.c)}は重解になるため含めません。`,
   `以上を合わせると、求める範囲は${answer}です。この範囲では平方根が正で、二つの根がそれぞれ元の区間条件を満たします。`
  ],answer,finalRange:{...r}};
- return {id,index,status:'prototype-unreviewed' as const,problemRequirements:requirements.map(r=>({...r,crossSkills:[...r.crossSkills]})),mistakeHypotheses:choices.flatMap(c=>c.mistakeHypotheses),model,prompt:`放物線${model.curve}と水平線y=kが異なる2点で交わり、その2つの共有点のx座標がともに${model.interval}を満たすような、実数kの範囲を求めよ。`,answer,choices,explanation,graph,sampleK,variation:`${model.limiting}:${r.upperClosed?'inclusive':'strict'}`};
+ return {id,index,status:'prototype-unreviewed' as const,problemRequirements:requirements.map(r=>({...r,crossSkills:[...r.crossSkills]})),mistakeHypotheses:choices.flatMap(c=>c.mistakeHypotheses),model,distractorSelection:selection.decisions,prompt:`放物線${model.curve}と水平線y=kが異なる2点で交わり、その2つの共有点のx座標がともに${model.interval}を満たすような、実数kの範囲を求めよ。`,answer,choices,explanation,graph,sampleK,variation:`${model.limiting}:${r.upperClosed?'inclusive':'strict'}`};
 }
 // Curated cases include symmetric/asymmetric intervals, open/closed limiting and non-limiting ends.
 const seeds:[number,number,number,number,boolean,boolean][]=[

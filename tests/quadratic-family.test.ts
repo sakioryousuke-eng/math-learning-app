@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {familyProblems,familyModel,rangeText,accepts} from '../src/prototype/quadratic-family.ts';
+import {familyProblems,familyModel,rangeText,accepts,generateFamilyProblem,selectDiagnosticCandidates,equivalentRange} from '../src/prototype/quadratic-family.ts';
 import type {FamilyParameters} from '../src/prototype/quadratic-family.ts';
 import {explanationGraph} from '../src/ui/explanation-graph.ts';
 import {paperCurriculum} from '../src/grading/paper-choices.ts';
@@ -32,15 +32,14 @@ test('family: reject impossible or unsafe inputs',()=>{
  for(const parameters of [{h:0,c:0,L:0,R:2},{h:3,c:0,L:0,R:2},{h:1,c:Infinity,L:0,R:2},{h:1.234,c:0,L:0,R:3}])assert.throws(()=>familyModel({...parameters,leftClosed:true,rightClosed:true}));
 });
 
-// Frozen from commit 4aef7be before the attribute-only change.
+// Frozen from commit c1ba138; only choice selection metadata/content is excluded.
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
-import {renderFamilyAttributes} from '../src/ui/family-prototype.ts';
-test('family: mathematical content, choices, explanations and graphs match the pre-change baseline',()=>{
+import {renderFamilyAttributes,renderDistractorSelection} from '../src/ui/family-prototype.ts';
+test('family: mathematical content, requirements, explanations and graphs match the pre-change baseline',()=>{
  const baseline=JSON.parse(readFileSync(new URL('./quadratic-family-baseline.json',import.meta.url),'utf8')) as {id:string;sha256:string}[];
  const actual=familyProblems.map(p=>{
-  const {problemRequirements,mistakeHypotheses,...content}=p;
-  const snapshot={...content,choices:p.choices.map(({mistakeHypotheses,...choice})=>choice)};
+  const {choices,mistakeHypotheses,distractorSelection,...snapshot}=p;
   return {id:p.id,sha256:createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')};
  });
  assert.deepEqual(actual,baseline);
@@ -74,4 +73,51 @@ test('family: verification display separates requirements from only the selected
   for(const h of p.mistakeHypotheses)assert.equal(html.includes(h.description),h.choiceId===choice.choiceId);
   if(choice.correct)assert.ok(html.includes('弱点仮説は付与しません'));
  }
+});
+
+test('family: selection is invariant under problem numbers and candidate input order',()=>{
+ const signature=(p:ReturnType<typeof generateFamilyProblem>)=>p.distractorSelection.map(c=>({key:c.key,range:c.choice.range,score:c.diagnosticScore,selected:c.selected,reason:c.selectionReason}));
+ for(const p of familyProblems){
+  for(const index of [1,2,31,104])assert.deepEqual(signature(generateFamilyProblem(p.model.parameters,index)),signature(p));
+  const shuffled=selectDiagnosticCandidates(p.model.finalRange,[...p.distractorSelection].reverse(),()=>[]);
+  assert.deepEqual(shuffled.decisions.map(c=>[c.key,c.selected]),p.distractorSelection.map(c=>[c.key,c.selected]));
+ }
+ const source=readFileSync(new URL('../src/prototype/quadratic-family.ts',import.meta.url),'utf8');
+ assert.ok(!/index\s*%/.test(source));
+});
+test('family: all candidates have scores, mathematical reasons and a visible selection decision',()=>{
+ for(const p of familyProblems){
+  assert.equal(p.distractorSelection.length,4);assert.equal(p.distractorSelection.filter(c=>c.selected).length,3);
+  const html=renderDistractorSelection(p);
+  for(const c of p.distractorSelection){
+   assert.ok(Number.isFinite(c.diagnosticScore));assert.ok(c.relevanceReason.length);assert.ok(c.selectionReason.length);
+   assert.ok(html.includes(c.key));assert.ok(html.includes(c.selectionReason));
+   assert.equal(p.choices.some(choice=>choice.choiceId===c.choice.choiceId),c.selected);
+   if(c.selected)assert.ok(!equivalentRange(c.choice.range,p.model.finalRange));
+  }
+ }
+});
+test('family: asymmetric geometry and endpoint closure drive diagnostic priority',()=>{
+ let asymmetricSelected=0,openBoundarySelected=0;
+ for(const p of familyProblems){
+  const one=p.distractorSelection.find(c=>c.key==='one_root_only')!;
+  const boundary=p.distractorSelection.find(c=>c.key==='boundary_equality')!;
+  if(p.model.limiting!=='both'){assert.ok(one.selected);asymmetricSelected++;}
+  else {assert.ok(!one.selected);assert.equal(one.diagnosticScore,0);}
+  if(!p.model.finalRange.upperClosed||p.model.parameters.leftClosed!==p.model.parameters.rightClosed){assert.ok(boundary.selected);assert.ok(boundary.diagnosticScore>=100);openBoundarySelected++;}
+ }
+ assert.ok(asymmetricSelected>0);assert.ok(openBoundarySelected>0);
+ const closed=generateFamilyProblem({h:0,c:0,L:-1,R:3,leftClosed:true,rightClosed:true},1);
+ const open=generateFamilyProblem({h:0,c:0,L:-1,R:3,leftClosed:false,rightClosed:true},1);
+ assert.ok(open.distractorSelection.find(c=>c.key==='boundary_equality')!.diagnosticScore>closed.distractorSelection.find(c=>c.key==='boundary_equality')!.diagnosticScore);
+});
+test('family: equivalent candidates are excluded and meaningful reserve candidates fill three slots',()=>{
+ const p=familyProblems[0],valid=p.distractorSelection.filter(c=>c.selected);
+ const first=valid[0];let reserveCalled=false;
+ const result=selectDiagnosticCandidates(p.model.finalRange,[first,{...first,key:'duplicate'}, {...first,key:'correct-equivalent',choice:p.choices[0]}],()=>{reserveCalled=true;return valid.slice(1);});
+ assert.ok(reserveCalled);assert.equal(result.choices.length,3);
+ assert.equal(new Set(result.choices.map(c=>c.text)).size,3);
+ assert.ok(result.decisions.some(c=>!c.selected&&c.selectionReason.includes('採用候補')));
+ assert.ok(result.decisions.some(c=>!c.selected&&c.selectionReason.includes('正答と数学的に同値')));
+ for(const c of result.choices)assert.ok(!equivalentRange(c.range,p.model.finalRange));
 });
