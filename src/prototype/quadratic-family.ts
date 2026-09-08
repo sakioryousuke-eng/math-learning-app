@@ -2,7 +2,25 @@ import type {ExplanationGraph} from '../ui/explanation-graph.ts';
 export interface FamilyParameters {h:number;c:number;L:number;R:number;leftClosed:boolean;rightClosed:boolean}
 export interface KRange {lower:number;lowerClosed:boolean;upper:number|null;upperClosed:boolean}
 export type MistakeType='real_root_only'|'double_root_included'|'boundary_equality'|'one_root_only';
-export interface FamilyChoice {choiceId:string;range:KRange;text:string;correct:boolean;mistakeType:MistakeType|null;weaknessTags:string[];crossSkills:string[]}
+export type FamilyCrossSkill='X03'|'X04'|'X07'|'X08'|'X13';
+export interface ProblemRequirement {id:string;description:string;crossSkills:FamilyCrossSkill[]}
+export interface MistakeHypothesis {choiceId:string;mistakeType:MistakeType;description:string;weaknessTags:MistakeType[];crossSkills:FamilyCrossSkill[];hypothesisOnly:true}
+export interface FamilyChoice {choiceId:string;range:KRange;text:string;correct:boolean;mistakeType:MistakeType|null;mistakeHypotheses:MistakeHypothesis[]}
+const requirements:ProblemRequirement[]=[
+ {id:'intersection_equation',description:'共有点の条件を、高さが等しい方程式に変換する',crossSkills:['X08']},
+ {id:'distinct_roots',description:'「異なる2点」の条件を保ち、重解を除く',crossSkills:['X04']},
+ {id:'both_roots',description:'二つの根を漏れなく両方確認する',crossSkills:['X07']},
+ {id:'preserve_interval',description:'指定区間の条件を、両根の条件へ引き継ぐ',crossSkills:['X04']},
+ {id:'endpoint_inclusion',description:'区間の端点を含むかどうかと、不等号の等号を対応させる',crossSkills:['X03']},
+ {id:'verify_original',description:'得た範囲を、異なる2点・両根の区間という元の条件で検証する',crossSkills:['X13']}
+];
+// A choice suggests a specific hypothesis; required abilities are never failure evidence.
+const hypotheses:Record<MistakeType,{description:string;crossSkills:FamilyCrossSkill[]}>= {
+ real_root_only:{description:'実数解の条件だけで止まり、指定区間の条件を引き継いでいない可能性',crossSkills:['X04']},
+ double_root_included:{description:'「異なる2点」の条件を保てず、重解を含めている可能性',crossSkills:['X04']},
+ boundary_equality:{description:'端点を含むかどうかと、境界値の等号が対応していない可能性',crossSkills:['X03']},
+ one_root_only:{description:'二つの根のうち、一方だけを確認している可能性',crossSkills:['X07']}
+};
 export const numberText=(v:number)=>{let numerator=Math.round(v*16),denominator=16;while(denominator>1&&numerator%2===0){numerator/=2;denominator/=2;}return denominator===1?String(numerator):`${numerator}/${denominator}`;};
 const signed=(v:number)=>v===0?'':`${v<0?'−':'+'}${numberText(Math.abs(v))}`;
 export const rangeText=(r:KRange)=>`${numberText(r.lower)}${r.lowerClosed?'≦':'<'}k${r.upper===null?'':`${r.upperClosed?'≦':'<'}${numberText(r.upper)}`}`;
@@ -21,20 +39,19 @@ export function familyModel(p:FamilyParameters){
   leftRootCondition:`√(${radicand})${p.leftClosed?'≦':'<'}${numberText(leftDistance)}`,
   rightRootCondition:`√(${radicand})${p.rightClosed?'≦':'<'}${numberText(rightDistance)}`,
   interval:`${numberText(p.L)}${p.leftClosed?'≦':'<'}x${p.rightClosed?'≦':'<'}${numberText(p.R)}`,
-  boundaries:{doubleRoot:p.c,leftEndpoint:leftValue,rightEndpoint:rightValue},
-  crossSkills:['X03','X04','X06','X07','X08','X10','X13']
+  boundaries:{doubleRoot:p.c,leftEndpoint:leftValue,rightEndpoint:rightValue}
  };
 }
 export function generateFamilyProblem(p:FamilyParameters,index:number){
  const model=familyModel(p),{finalRange:r}=model,id=`QF-FAMILY-HORIZONTAL-${String(index).padStart(2,'0')}`;
- const candidate=(mistakeType:MistakeType,range:KRange,weaknessTags:string[],crossSkills:string[]):FamilyChoice=>({choiceId:`${id}:${mistakeType}`,range,text:rangeText(range),correct:false,mistakeType,weaknessTags,crossSkills});
- const ignore=candidate('real_root_only',{...r,upper:null,upperClosed:false},['real_root_only','interval_ignored','domain_interval'],['X03','X08','X10']);
- const double=candidate('double_root_included',{...r,lowerClosed:true},['double_root_included','condition_preservation'],['X04','X13']);
- const equality=candidate('boundary_equality',{...r,upperClosed:!r.upperClosed},['boundary_equality','condition_preservation','verification_missing'],['X04','X06','X13']);
+ const candidate=(mistakeType:MistakeType,range:KRange):FamilyChoice=>({choiceId:`${id}:${mistakeType}`,range,text:rangeText(range),correct:false,mistakeType,mistakeHypotheses:[{choiceId:`${id}:${mistakeType}`,mistakeType,description:hypotheses[mistakeType].description,weaknessTags:[mistakeType],crossSkills:[...hypotheses[mistakeType].crossSkills],hypothesisOnly:true}]});
+ const ignore=candidate('real_root_only',{...r,upper:null,upperClosed:false});
+ const double=candidate('double_root_included',{...r,lowerClosed:true});
+ const equality=candidate('boundary_equality',{...r,upperClosed:!r.upperClosed});
  const farClosed=model.leftDistance>model.rightDistance?p.leftClosed:p.rightClosed;
- const one=candidate('one_root_only',{...r,upper:Math.max(model.leftValue,model.rightValue),upperClosed:farClosed},['one_root_only','domain_interval','verification_missing'],['X03','X07','X13']);
+ const one=candidate('one_root_only',{...r,upper:Math.max(model.leftValue,model.rightValue),upperClosed:farClosed});
  const candidates=model.limiting!=='both'&&index%2===0?[one,double,ignore,equality]:[ignore,double,equality,one];
- const choices:FamilyChoice[]=[{choiceId:`${id}:correct`,range:{...r},text:rangeText(r),correct:true,mistakeType:null,weaknessTags:[],crossSkills:[]}];
+ const choices:FamilyChoice[]=[{choiceId:`${id}:correct`,range:{...r},text:rangeText(r),correct:true,mistakeType:null,mistakeHypotheses:[]}];
  for(const candidate of candidates)if(choices.length<4&&!choices.some(c=>c.text===candidate.text))choices.push(candidate);
  if(choices.length!==4)throw new Error('Four distinct choices required');
  const d=Math.min(model.leftDistance,model.rightDistance),sampleK=p.c+(d/2)**2;
@@ -49,7 +66,7 @@ export function generateFamilyProblem(p:FamilyParameters,index:number){
   `k=${numberText(r.upper!)}では根は${numberText(p.h-d)}と${numberText(p.h+d)}になります。${r.upperClosed?'境界に来る根を含めて、両方とも指定区間内にあります。よって上限の等号を含めます。':'少なくとも一方の根が、含まない端点に来ます。よって上限の等号は含めません。'}一方、下限k=${numberText(p.c)}は重解になるため含めません。`,
   `以上を合わせると、求める範囲は${answer}です。この範囲では平方根が正で、二つの根がそれぞれ元の区間条件を満たします。`
  ],answer,finalRange:{...r}};
- return {id,index,status:'prototype-unreviewed' as const,model,prompt:`放物線${model.curve}と水平線y=kが異なる2点で交わり、その2つの共有点のx座標がともに${model.interval}を満たすような、実数kの範囲を求めよ。`,answer,choices,explanation,graph,sampleK,variation:`${model.limiting}:${r.upperClosed?'inclusive':'strict'}`};
+ return {id,index,status:'prototype-unreviewed' as const,problemRequirements:requirements.map(r=>({...r,crossSkills:[...r.crossSkills]})),mistakeHypotheses:choices.flatMap(c=>c.mistakeHypotheses),model,prompt:`放物線${model.curve}と水平線y=kが異なる2点で交わり、その2つの共有点のx座標がともに${model.interval}を満たすような、実数kの範囲を求めよ。`,answer,choices,explanation,graph,sampleK,variation:`${model.limiting}:${r.upperClosed?'inclusive':'strict'}`};
 }
 // Curated cases include symmetric/asymmetric intervals, open/closed limiting and non-limiting ends.
 const seeds:[number,number,number,number,boolean,boolean][]=[

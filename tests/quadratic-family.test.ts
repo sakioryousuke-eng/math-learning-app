@@ -16,7 +16,7 @@ for(const p of familyProblems)test(`family ${p.index}: complete model, four dist
  const points=new Set([c-1,c,c+.01,p.sampleK,upper-.01,upper,upper+.01,...p.choices.flatMap(choice=>choice.range.upper===null?[]:[choice.range.upper-.01,choice.range.upper,choice.range.upper+.01])]);
  for(let k=c-1;k<=Math.max(left,right)+1;k+=.25)points.add(k);
  for(const k of points)assert.equal(accepts(m.finalRange,k),satisfies(params,k),`k=${k}`);
- for(const choice of p.choices){assert.equal(choice.text,rangeText(choice.range));const equivalent=[...points].every(k=>accepts(choice.range,k)===satisfies(params,k));assert.equal(equivalent,choice.correct);if(!choice.correct){assert.ok(choice.mistakeType);assert.ok(choice.weaknessTags.length);assert.ok(choice.crossSkills.length);}}
+ for(const choice of p.choices){assert.equal(choice.text,rangeText(choice.range));const equivalent=[...points].every(k=>accepts(choice.range,k)===satisfies(params,k));assert.equal(equivalent,choice.correct);if(!choice.correct){assert.ok(choice.mistakeType);assert.ok(choice.mistakeHypotheses.length);}}
  assert.deepEqual(p.graph.curves[0].coefficients,[1,-2*h,h*h+c]);assert.deepEqual(p.graph.curves[1].coefficients,[0,0,p.sampleK]);assert.deepEqual(p.graph.domain,[L,R]);assert.equal(p.graph.openLeft,!leftClosed);assert.equal(p.graph.openRight,!rightClosed);
  assert.ok(p.prompt.includes(m.curve));assert.ok(p.prompt.includes(m.interval));assert.ok(m.leftRootCondition.includes(leftClosed?'≦':'<'));assert.ok(m.rightRootCondition.includes(rightClosed?'≦':'<'));
  assert.ok(satisfies(params,p.sampleK));for(const x of [h-Math.sqrt(p.sampleK-c),h+Math.sqrt(p.sampleK-c)])assert.ok(Math.abs((x-h)**2+c-p.sampleK)<1e-9);
@@ -30,4 +30,48 @@ test('family: 20 unique prototypes, six geometric/boundary situations, excluded 
 });
 test('family: reject impossible or unsafe inputs',()=>{
  for(const parameters of [{h:0,c:0,L:0,R:2},{h:3,c:0,L:0,R:2},{h:1,c:Infinity,L:0,R:2},{h:1.234,c:0,L:0,R:3}])assert.throws(()=>familyModel({...parameters,leftClosed:true,rightClosed:true}));
+});
+
+// Frozen from commit 4aef7be before the attribute-only change.
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {renderFamilyAttributes} from '../src/ui/family-prototype.ts';
+test('family: mathematical content, choices, explanations and graphs match the pre-change baseline',()=>{
+ const baseline=JSON.parse(readFileSync(new URL('./quadratic-family-baseline.json',import.meta.url),'utf8')) as {id:string;sha256:string}[];
+ const actual=familyProblems.map(p=>{
+  const {problemRequirements,mistakeHypotheses,...content}=p;
+  const snapshot={...content,choices:p.choices.map(({mistakeHypotheses,...choice})=>choice)};
+  return {id:p.id,sha256:createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')};
+ });
+ assert.deepEqual(actual,baseline);
+});
+test('family: requirements and narrowly scoped choice hypotheses are separate on all 20 problems',()=>{
+ const expectedRequirements={intersection_equation:['X08'],distinct_roots:['X04'],both_roots:['X07'],preserve_interval:['X04'],endpoint_inclusion:['X03'],verify_original:['X13']};
+ const expectedHypotheses={real_root_only:['X04'],double_root_included:['X04'],boundary_equality:['X03'],one_root_only:['X07']};
+ for(const p of familyProblems){
+  assert.deepEqual(Object.fromEntries(p.problemRequirements.map(r=>[r.id,r.crossSkills])),expectedRequirements);
+  assert.ok(p.problemRequirements.every(r=>r.description.length>0));
+  assert.deepEqual(p.mistakeHypotheses,p.choices.flatMap(c=>c.mistakeHypotheses));
+  assert.ok(!('crossSkills' in p.model));
+  for(const c of p.choices){
+   assert.ok(!('weaknessTags' in c));assert.ok(!('crossSkills' in c));
+   if(c.correct){assert.deepEqual(c.mistakeHypotheses,[]);assert.ok(!p.mistakeHypotheses.some(h=>h.choiceId===c.choiceId));continue;}
+   assert.equal(c.mistakeHypotheses.length,1);
+   const h=c.mistakeHypotheses[0];
+   assert.equal(h.choiceId,c.choiceId);assert.equal(h.mistakeType,c.mistakeType);
+   assert.deepEqual(h.weaknessTags,[c.mistakeType]);assert.deepEqual(h.crossSkills,expectedHypotheses[h.mistakeType]);
+   assert.equal(h.hypothesisOnly,true);assert.ok(h.description.includes('可能性'));
+  }
+  const cross=[...p.problemRequirements.flatMap(r=>r.crossSkills),...p.mistakeHypotheses.flatMap(h=>h.crossSkills)];
+  assert.ok(!cross.some(id=>String(id)==='X06'||String(id)==='X10'));
+ }
+});
+test('family: verification display separates requirements from only the selected hypothesis',()=>{
+ for(const p of familyProblems)for(const choice of p.choices){
+  const html=renderFamilyAttributes(p,choice.choiceId);
+  assert.ok(html.includes('この問題で必要な能力'));assert.ok(html.includes('今回選択した誤答から得られる弱点仮説'));
+  for(const r of p.problemRequirements)assert.ok(html.includes(r.description));
+  for(const h of p.mistakeHypotheses)assert.equal(html.includes(h.description),h.choiceId===choice.choiceId);
+  if(choice.correct)assert.ok(html.includes('弱点仮説は付与しません'));
+ }
 });
