@@ -32,14 +32,16 @@ test('family: reject impossible or unsafe inputs',()=>{
  for(const parameters of [{h:0,c:0,L:0,R:2},{h:3,c:0,L:0,R:2},{h:1,c:Infinity,L:0,R:2},{h:1.234,c:0,L:0,R:3}])assert.throws(()=>familyModel({...parameters,leftClosed:true,rightClosed:true}));
 });
 
-// Frozen from commit c1ba138; only choice selection metadata/content is excluded.
+// Frozen from commit 39be4e6; only explanation prose and graph caption are excluded.
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {renderFamilyAttributes,renderDistractorSelection} from '../src/ui/family-prototype.ts';
-test('family: mathematical content, requirements, explanations and graphs match the pre-change baseline',()=>{
+test('family: mathematical content, choices, diagnostic metadata and graph parameters match the pre-change baseline',()=>{
  const baseline=JSON.parse(readFileSync(new URL('./quadratic-family-baseline.json',import.meta.url),'utf8')) as {id:string;sha256:string}[];
  const actual=familyProblems.map(p=>{
-  const {choices,mistakeHypotheses,distractorSelection,...snapshot}=p;
+  const {thinking,steps,...explanation}=p.explanation;
+  const {caption,...graph}=p.graph;
+  const snapshot={...p,explanation,graph};
   return {id:p.id,sha256:createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')};
  });
  assert.deepEqual(actual,baseline);
@@ -120,4 +122,31 @@ test('family: equivalent candidates are excluded and meaningful reserve candidat
  assert.ok(result.decisions.some(c=>!c.selected&&c.selectionReason.includes('採用候補')));
  assert.ok(result.decisions.some(c=>!c.selected&&c.selectionReason.includes('正答と数学的に同値')));
  for(const c of result.choices)assert.ok(!equivalentRange(c.range,p.model.finalRange));
+});
+
+test('family: all 20 explanations state the reasons, both-root check, endpoint inclusion and final verification',()=>{
+ for(const p of familyProblems){
+  const e=p.explanation,text=[e.thinking,...e.steps,p.graph.caption].join('\n');
+  assert.ok(e.thinking.length>0);assert.equal(e.steps.length,7);assert.equal(e.answer,p.answer);
+  assert.ok(!/f\s*\(/.test(text));
+  assert.ok(e.steps[0].includes(p.model.equation));assert.ok(e.steps[1].includes(p.model.distinctCondition));
+  assert.ok(e.steps[2].includes(p.model.roots[0])&&e.steps[2].includes(p.model.roots[1]));
+  assert.ok(e.steps[3].includes(p.model.leftRootCondition)&&e.steps[3].includes(p.model.rightRootCondition));
+  assert.ok(e.steps[3].includes('左側だけ、または右側だけを確認しても十分ではありません'));
+  assert.ok(e.steps[3].includes('同時に満たす'));
+  const boundary=e.steps[5];
+  if(p.model.finalRange.upperClosed){assert.ok(boundary.includes('区間に含まれ'));assert.ok(boundary.includes('上限には等号を付けます'));}
+  else {assert.ok(boundary.includes('区間に含まれないため'));assert.ok(boundary.includes('上限には等号を付けません'));}
+  const last=e.steps.at(-1)!;assert.ok(last.includes('元の条件に戻って'));assert.ok(last.includes('異なる2点'));assert.ok(last.includes(p.model.interval));
+  assert.ok(p.graph.caption.includes('一例'));assert.ok(p.graph.caption.includes('どちらも指定区間'));assert.ok(p.graph.caption.includes('この図だけで判断せず'));
+ }
+});
+test('family: explanation wording follows the limiting endpoint and the presentation order stays intact',()=>{
+ for(const p of familyProblems){
+  const step=p.explanation.steps[4];
+  assert.ok(step.includes(p.model.limiting==='both'?'同時に両端':p.model.limiting==='left'?'左側の共有点が先に左端':'右側の共有点が先に右端'));
+ }
+ const ui=readFileSync(new URL('../src/ui/family-prototype.ts',import.meta.url),'utf8');
+ const headings=['<h2>考え方</h2>','<h2>解き方</h2>','<h2>グラフ</h2>','<h2>答え</h2>'].map(h=>ui.indexOf(h));
+ assert.ok(headings.every((position,index)=>position>=0&&(index===0||position>headings[index-1])));
 });

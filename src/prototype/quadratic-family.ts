@@ -98,16 +98,25 @@ export function generateFamilyProblem(p:FamilyParameters,index:number){
  const selection=selectDiagnosticCandidates(r,primary,supplement);
  const choices:FamilyChoice[]=[{choiceId:`${id}:correct`,range:{...r},text:rangeText(r),correct:true,mistakeType:null,mistakeHypotheses:[]},...selection.choices];
  const d=Math.min(model.leftDistance,model.rightDistance),sampleK=p.c+(d/2)**2;
- const graph:ExplanationGraph={title:`水平線 y=k の例（k=${numberText(sampleK)}）`,curves:[{formula:model.curve,coefficients:[1,-2*p.h,p.h*p.h+p.c]},{formula:`y=${numberText(sampleK)}`,coefficients:[0,0,sampleK]}],view:[p.L-1,p.R+1,p.c-1,Math.max(model.leftValue,model.rightValue)+2],domain:[p.L,p.R],openLeft:!p.leftClosed,openRight:!p.rightClosed,caption:`指定区間は${model.interval}。この図は範囲内のk=${numberText(sampleK)}の例です。共有点は(${numberText(p.h-d/2)}, ${numberText(sampleK)})と(${numberText(p.h+d/2)}, ${numberText(sampleK)})。kの全範囲は以下の条件から判断します。`};
- const boundarySource=model.limiting==='both'?'左右の端点で同じ高さになるため、両端の条件':model.limiting==='left'?'左端のほうが軸に近いため、左端の条件':'右端のほうが軸に近いため、右端の条件';
+ const graph:ExplanationGraph={title:`水平線 y=k の例（k=${numberText(sampleK)}）`,curves:[{formula:model.curve,coefficients:[1,-2*p.h,p.h*p.h+p.c]},{formula:`y=${numberText(sampleK)}`,coefficients:[0,0,sampleK]}],view:[p.L-1,p.R+1,p.c-1,Math.max(model.leftValue,model.rightValue)+2],domain:[p.L,p.R],openLeft:!p.leftClosed,openRight:!p.rightClosed,caption:`答えの範囲に入るk=${numberText(sampleK)}を選んだ一例です。共有点(${numberText(p.h-d/2)}, ${numberText(sampleK)})と(${numberText(p.h+d/2)}, ${numberText(sampleK)})は、どちらも指定区間${model.interval}に入っています。kの全範囲や境界での等号は、この図だけで判断せず、上の式で確かめます。`};
+ const boundarySource=model.limiting==='both'
+  ?'左右の端点の高さは同じです。水平線がこの高さに達すると、二つの共有点が同時に両端へ来ます。'
+  :model.limiting==='left'
+   ?'左端のほうが軸に近く、右端より低い位置にあります。水平線を上げていくと、左側の共有点が先に左端へ来ます。'
+   :'右端のほうが軸に近く、左端より低い位置にあります。水平線を上げていくと、右側の共有点が先に右端へ来ます。';
+ const endpointAtBoundary=model.limiting==='both'?'二つの共有点が両端に来ます':model.limiting==='left'?'左側の共有点が左端に来ます':'右側の共有点が右端に来ます';
+ const equalityReason=r.upperClosed
+  ?model.limiting==='both'?'両端とも区間に含まれるため、このkでも二つの共有点は区間内にあります。したがって、上限には等号を付けます。':'その端点は区間に含まれ、もう一方の共有点も区間の内側にあります。したがって、上限には等号を付けます。'
+  :model.limiting==='both'?'少なくとも一方の端点が区間に含まれないため、このkは条件を満たしません。したがって、上限には等号を付けません。':'その端点は区間に含まれないため、このkは条件を満たしません。したがって、上限には等号を付けません。';
  const answer=rangeText(r);
- const explanation={thinking:'異なる2点で交わるには、水平線が頂点より上にある必要があります。それだけでなく、二つの共有点がどちらも指定区間に入ることを確かめます。軸から左右の端までの距離を比べましょう。',steps:[
-  `共有点では二つの高さが等しいので、${model.equation}です。実数解がある条件は${model.realCondition}ですが、等号では頂点で接する1点だけになります。異なる2点には${model.distinctCondition}が必要です。`,
-  `このとき共有点のx座標は${model.roots[0]}と${model.roots[1]}です。軸x=${numberText(p.h)}は指定区間の内側にあるので、左の根は左端、右の根は右端との関係を調べれば十分です。`,
-  `左の根が区間内に入るには${model.leftRootCondition}、右の根が入るには${model.rightRootCondition}が必要です。左右どちらか一方だけでなく、両方の条件を満たさなければなりません。`,
-  `端点の高さはf(${numberText(p.L)})=${numberText(model.leftValue)}、f(${numberText(p.R)})=${numberText(model.rightValue)}です。${boundarySource}が上限を決めます。したがって、上限の境界はk=${numberText(r.upper!)}です。`,
-  `k=${numberText(r.upper!)}では根は${numberText(p.h-d)}と${numberText(p.h+d)}になります。${r.upperClosed?'境界に来る根を含めて、両方とも指定区間内にあります。よって上限の等号を含めます。':'少なくとも一方の根が、含まない端点に来ます。よって上限の等号は含めません。'}一方、下限k=${numberText(p.c)}は重解になるため含めません。`,
-  `以上を合わせると、求める範囲は${answer}です。この範囲では平方根が正で、二つの根がそれぞれ元の区間条件を満たします。`
+ const explanation={thinking:'水平線が放物線と異なる2点で交わっても、その二つが指定された区間に入るとは限りません。まず共有点が2つある条件を調べ、次に左右それぞれの共有点が区間内にあるかを確かめます。端点に来た共有点を含めてよいかどうかも、最後の等号を決める大切な点です。',steps:[
+  `共有点では、放物線と水平線のy座標が等しくなります。二つの式を等しいとおくと、${model.equation}となります。`,
+  `この方程式が実数解を持つ条件は${model.realCondition}です。ただし、k=${numberText(p.c)}では水平線が頂点で接し、共有点は1つだけになります。異なる2点で交わるには、水平線が頂点より上にあること、つまり${model.distinctCondition}が必要です。`,
+  `この条件のもとで方程式を解くと、共有点のx座標は${model.roots[0]}と${model.roots[1]}です。二つの共有点は、指定区間の内側にある軸x=${numberText(p.h)}をはさんで左右にあります。左側の共有点が左端を越えず、右側の共有点が右端を越えなければ、二つとも区間に入ります。ただし、端点そのものを含めるかどうかは、問題の不等号に従います。`,
+  `左側の共有点について、x座標を左端の条件に当てはめて整理すると${model.leftRootCondition}となります。同じように、右側の共有点について右端の条件を整理すると${model.rightRootCondition}です。左側だけ、または右側だけを確認しても十分ではありません。この二つの不等式を同時に満たすkを求めます。`,
+  `左端x=${numberText(p.L)}での放物線の値は${numberText(model.leftValue)}、右端x=${numberText(p.R)}での値は${numberText(model.rightValue)}です。${boundarySource}それより高くすると共有点が区間の外へ出るので、kの上限となる境界値は${numberText(r.upper!)}です。`,
+  `境界のk=${numberText(r.upper!)}では、共有点のx座標は${numberText(p.h-d)}と${numberText(p.h+d)}になり、${endpointAtBoundary}。${equalityReason}一方、下限のk=${numberText(p.c)}では重解になるため、下限には等号を付けません。`,
+  `以上より、求める範囲は${answer}です。元の条件に戻って確かめると、この範囲では平方根の中が正なので共有点は異なる2点になり、左側・右側のx座標はどちらも${model.interval}を満たしています。`
  ],answer,finalRange:{...r}};
  return {id,index,status:'prototype-unreviewed' as const,problemRequirements:requirements.map(r=>({...r,crossSkills:[...r.crossSkills]})),mistakeHypotheses:choices.flatMap(c=>c.mistakeHypotheses),model,distractorSelection:selection.decisions,prompt:`放物線${model.curve}と水平線y=kが異なる2点で交わり、その2つの共有点のx座標がともに${model.interval}を満たすような、実数kの範囲を求めよ。`,answer,choices,explanation,graph,sampleK,variation:`${model.limiting}:${r.upperClosed?'inclusive':'strict'}`};
 }
