@@ -1,4 +1,5 @@
 import {legacyCatalog} from './catalog.ts';
+import {paperSpecs,choiceAssessment} from '../grading/paper-choices.ts';
 import type {LearningCatalog} from '../curriculum/types.ts';
 import type {Problem} from './catalog.ts';
 import {gradeMock,causes} from './mock-grader.ts';
@@ -26,6 +27,7 @@ export class LearningService {
   private learner:Learner;
   private catalog:LearningCatalog;
   private get master(){return this.catalog.master;}
+  private paperMax(unitId:string){return this.catalog.paperChoiceGrading===true&&unitId==='QFN';}
   private get problems(){return this.catalog.problems;}
   private get routeMaster(){return {...this.master,skills:this.master.skills.filter(s=>!this.catalog.retiredSkillIds?.includes(s.id)),units:this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id)||u.id===this.learner.activeUnit)};}
   private get diagnosticUnits(){return this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id));}
@@ -85,7 +87,8 @@ export class LearningService {
   }
   private nextMax(unitId:string):Problem|undefined {
     const seen=this.learner.maxAttempts[unitId]??[];
-    return this.problems.find(p=>p.purpose==='max'&&canUse(this.catalog,p,'max')&&this.master.skills.find(s=>s.id===p.skillId)?.unitId===unitId&&!seen.some(a=>a.problemId===p.id));
+    const pool=this.problems.filter(p=>p.purpose==='max'&&canUse(this.catalog,p,'max')&&this.master.skills.find(s=>s.id===p.skillId)?.unitId===unitId);
+    return pool.find(p=>!seen.some(a=>a.problemId===p.id))??(this.paperMax(unitId)?pool.find(p=>p.id!==seen.at(-1)?.problemId):undefined);
   }
   navigate(screen:'home'|'map'|'records'|'max'){
     if(screen==='home'&&!this.learner.diagnosticCompleted){this.screen='diagnostic';return;}
@@ -136,7 +139,7 @@ export class LearningService {
     if(this.current&&!this.result)throw new Error('表示中の問題を提出してから挑戦してください。');
     const {unitId,usedToday,policy}=this.snapshot;
     if(!unitId||!policy)throw new Error('すべての実装単元がMAXです。');
-    if(usedToday>=policy.dailyLimit)throw new Error('本日のMAX挑戦は提出済みです。');
+    if(!this.paperMax(unitId)&&usedToday>=policy.dailyLimit)throw new Error('本日のMAX挑戦は提出済みです。');
     const next=this.nextMax(unitId);if(!next)throw new Error('固定MAX問題をすべて使用しました。開発用ユーザーを切り替えて確認してください。');
     if(!this.learner.activeUnit)startUnit(this.master,this.learner,unitId);
     this.open(next,'max');
@@ -154,20 +157,39 @@ export class LearningService {
     if(this.catalog.reviewedOnly&&this.hintedProblems.includes(p.id))a.independent=false;
     this.applyGrading(outcome,a,undefined,implicatedSkill?[{...structuredClone(a),id:this.id(),skillId:implicatedSkill}]:undefined);
   }
+  submitChoice(choiceId:string,confirmed:string[]){
+    if(!this.catalog.paperChoiceGrading||!this.current||this.result||this.screen!=='submission'||this.current.context==='diagnostic')throw new Error('この答案は選択式で提出できません。');
+    const p=this.problem(this.current.problemId),spec=paperSpecs[p.id];
+    if(!spec||!canUse(this.catalog,p,this.current.context))throw new Error('対象の検証済み教材ではありません。');
+    const base=gradeMock(p,'correct',`event-${this.serial+1}`,this.now,this.current.context);
+    base.independent=!this.hintedProblems.includes(p.id);
+    const a=choiceAssessment(spec,choiceId,confirmed,base);
+    if(this.current.context==='max'&&(!this.paperMax(this.master.skills.find(s=>s.id===p.skillId)!.unitId)||!['OPEN','ACTIVE'].includes(unitStatus(this.master,this.learner,'QFN'))||this.learner.activeUnit&&this.learner.activeUnit!=='QFN'))throw new Error('MAXに挑戦できる単元ではありません。');
+    this.serial++;
+    this.applyGrading(a.solved?'correct':a.tags.includes('case_split')?'case_split':'calculation',a,undefined,[]);
+    this.result!.cause=a.choice!.correct?'最終結論は正しいです。紙答案の確認項目は本人の申告として記録しました。':'選んだ最終結論は正答と一致していません。紙答案と解説を照合してください。';
+    if(this.current.context==='max'){
+      this.practiceFocus=null;
+      if(!this.result!.acquired)this.result!.notice=a.choice!.missing.length?'必須答案要素が不足しています。解説で確認し、別のMAX問題へ再挑戦できます。':'今回の最終結論は未解決です。解説で確認し、別のMAX問題へ再挑戦できます。';
+    }else if(!this.result!.stable&&a.choice!.correct)this.result!.notice='最終結論の成功を記録しました。未確認の途中式・根拠を完全だったとは判定していません。';
+  }
   private applyGrading(outcome:MockOutcome,a:Assessment,maxOverride?:MaxAttempt,observations?:Assessment[]){
     const c=this.current!,p=this.problem(c.problemId);
     const repairTarget=observations===undefined?p.repairSkillId:observations[0]?.skillId??null;
     let acquired=false,repaired=false,stable=false,notice='';
     if(c.context==='max'){
       const max:MaxAttempt=maxOverride??{problemId:p.id,independenceKey:p.independenceKey,at:this.now,noHint:true,noMethodSpecified:true,independent:true,examQuality:outcome==='correct',practicalTime:true,correctConclusion:a.solved,readable:a.readable,sufficientWriting:outcome==='correct'};
-      if(this.catalog.reviewedOnly&&!maxOverride){
+      if(this.catalog.reviewedOnly&&!maxOverride&&!a.choice){
         max.noHint=!this.hintedProblems.includes(p.id);
         max.independent=a.independent;
         max.practicalTime=Date.now()-this.realStartedAt<=25*60*1000;
         if(!max.practicalTime)notice='25分の目安を超えたため、答案の記録は残し、今回のMAX成功証拠には含めません。';
       }
       const unit=this.master.skills.find(s=>s.id===p.skillId)!.unitId;
-      if(this.catalog.reviewedOnly){
+      if(this.paperMax(unit)&&a.choice){
+        (this.learner.maxAttempts[unit]??=[]).push({...max,practicalTime:true,correctConclusion:a.choice.correct,readable:a.choice.confirmed.includes('readable'),examQuality:a.solved,sufficientWriting:a.choice.missing.length===0});
+        if(a.solved){this.learner.maxUnits.push(unit);for(const skill of this.master.skills.filter(s=>s.unitId===unit))this.learner.skills[skill.id]='stable';this.learner.activeUnit=null;this.learner.repair=null;this.learner.resume=null;acquired=true;}
+      }else if(this.catalog.reviewedOnly){
         const projected=eligibleEvidenceLearner(this.catalog,this.learner);
         acquired=submitMax(this.master,projected,unit,max);
         const originalAttempts=this.learner.maxAttempts,originalDiagnostic=this.learner.diagnosticMaxEvidence;
@@ -290,6 +312,7 @@ export class LearningService {
       if(this.diagnosisFinished)this.screen='diagnostic';else this.startDiagnostic();return;
     }
     if(context==='max'){
+      if(this.catalog.paperChoiceGrading&&this.result.assessment.choice){this.result=null;this.current=null;this.practiceFocus=null;this.screen=done?'home':'max';this.notice=done?'MAXを取得しました。次のルートを確認しましょう。':'待ち時間なく、別のMAX候補問題に再挑戦できます。';return;}
       this.result=null;this.current=null;
       if(this.learner.repair||this.practiceFocus)this.continueLearning();else{this.screen='home';this.notice=done?'MAX取得・上位ルートを解放しました。':'独立成功を保存しました。次のMAX挑戦は翌日です。';}return;
     }

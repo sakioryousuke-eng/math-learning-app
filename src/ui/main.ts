@@ -1,3 +1,5 @@
+import {paperSubmission,toPaperChecks,backPaperChoices,paperInput} from './paper-submission.ts';
+import {paperCurriculum as curriculum,paperSpecs} from '../grading/paper-choices.ts';
 import {bindDynamicQuadratic} from './dynamic-quadratic.ts';
 import {profileLabels} from '../services/learning-service.ts';
 import {quadraticExplanation} from './quadratic-explanation.ts';
@@ -5,7 +7,7 @@ import {previewControls,bindPreview,previewSelection} from './preview-controls.t
 import {verificationStates} from '../application/verification.ts';
 import type {VerificationState} from '../application/verification.ts';
 import type {Profile} from '../services/learning-service.ts';
-import {reviewedCurriculum as curriculum,steps} from '../curriculum/quadratic.ts';
+import {steps} from '../curriculum/quadratic.ts';
 import {lessonPanel} from './quadratic-view.ts';
 const master=curriculum.master;
 import {routeMap} from '../curriculum/route-map.ts';
@@ -98,6 +100,12 @@ function render(){
   const count=s.evidence.length,expired=s.evidence[0]?new Date(evidenceDeadline(s.evidence[0].at,s.policy!.validityDays)).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}):'最初の成功から7日間';
   content=`<div class="eyebrow">MAX CHALLENGE / 実戦確認</div><h1>${esc(unitName(s.unitId))}</h1><section class="max-card"><span class="max-mark">☆ MAX</span><h2>方法を選び、最後まで。</h2><p class="muted">二次関数の検証済みMAX問題を使用します。目安25分。模試相当の難易度・時間の実測校正は未完了です。</p><div class="evidence-circles" aria-label="独立成功 ${count} 回">${[1,2,3].map(i=>`<span class="${i<=count?'filled':''}">${i<=count?'✓':i}</span>`).join('')}</div><p><strong>独立成功 ${count} / 3</strong></p><p class="muted">証拠の期限：${esc(expired)}</p></section><ul class="conditions"><li>ノーヒント・方法指定なし</li><li>根拠と最終結論を含む答案</li><li>独立した問題で3回の成功</li><li>原則1日1回。失敗してもstableは保持</li></ul>${s.usedToday?'<div class="notice">本日の挑戦は提出済みです。次の挑戦は翌日です。</div>':''}${!s.availableMax&&s.unitId?'<div class="notice">この単元の固定MAX代表問題は使用済みです。独立した別問題の追加が必要です。</div>':''}${button('MAX問題に挑戦','start-max',false,!s.unitId||!!s.usedToday||!s.availableMax||!!s.current&&!s.result)}<p class="muted">${devMode?'開発用の仮採点で確認します。時計は上部の「開発確認」から進められます。':'実答案の採点は次段階で接続します。'}</p>`;
  }
+ if(s.problem&&paperSpecs[s.problem.id]&&s.current?.context!=='diagnostic'){
+  if(s.screen==='problem')content=content.replace('仮答案を提出する','紙答案の最終結果を提出する').replace('紙の答案と解説を照合して仮採点を選びます。AIによる実答案評価は未接続です。','紙に自由記述で解いてから、最終結論を選択して提出します。');
+  if(s.screen==='submission'&&!realMode)content=paperSubmission(s.problem.id,s.realToken,s.current?.context==='max');
+  if(s.screen==='result'&&s.result?.assessment.choice){const record=s.result.assessment.choice;content=content.replace('✓ 正解',s.current?.context==='max'?'✓ 完全合格':'✓ 最終結論は正しい');content+=`<p class="notice">最終結論は選択内容から判定しました。根拠・条件などは本人の自己申告であり、アプリが紙答案を読んだ判定ではありません。</p>${record.missing.length?`<p>未確認：${record.missing.map(id=>esc(paperSpecs[s.problem!.id].checks.find(c=>c.id===id)?.label??id)).join('／')}</p>`:''}`;}
+ }
+ if(s.screen==='max'&&s.unitId==='QFN')content=`<h1>二次関数 MAX</h1><section class="max-card"><h2>1題を紙に解き切る</h2><p>6択で最終結論を提出し、紙答案の必須要素を確認します。</p><p>最終結論が正しく、必須答案要素がすべて揃った1回の成功でMAXを取得します。</p><p>3回成功・7日以内・1日1回の制限はありません。失敗後も別の候補問題へ再挑戦できます。</p></section>${button('MAX問題に挑戦','start-max',false,!!s.current&&!s.result)}<p>紙の根拠・条件・可読性は自己申告で確認します。3題は独立した候補問題です。</p>`;
  if(s.screen==='explanation'&&s.problem?.skillId.startsWith('QF-')&&s.result&&s.result.outcome!=='prerequisite')content=`<h1>答えと解説</h1>${quadraticExplanation(s.problem)}${button(p.repair?'必要な技能へ':s.result.repaired?'元問題へ復帰':'次へ','next')}`;
  if(s.problem&&s.problem.reviewStatus!=='reviewed'&&['problem','submission','result','explanation'].includes(s.screen))content='<h1>教材確認待ち</h1><p>旧問題の履歴と復帰先は保持しています。数学的検証が終わるまで出題と解説表示を保留します。</p>';
  if(s.screen==='diagnostic'&&!s.diagnosisFinished)content='<div class="notice">二次関数と必要な因数分解教材を検証しています。他単元は教材確認待ちのため、通常の初回診断は保留します。開発デモでは二次関数を確認できます。</div>'+content;
@@ -122,6 +130,8 @@ app.addEventListener('click',e=>{
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='paper-check'){try{toPaperChecks(app);error='';}catch(e){error=String(e);}render();return;}
+ if(action==='paper-back'){backPaperChoices();render();return;}
  if(action==='preview-problem'){const selection=previewSelection();void act(()=>{},()=>learning.useReviewedPreview(selection.id,selection.stable));return;}
  if(action==='verify-off'){const url=new URL(location.href);url.searchParams.set('verify','off');location.assign(url);return;}
  if(action==='verify-state'){const state=app.querySelector<HTMLSelectElement>('#verify-state')!.value as VerificationState;void act(()=>{},()=>learning.useVerification(state));return;}
@@ -142,6 +152,7 @@ app.addEventListener('click',e=>{
    case'retake':clearImage();break;
 
    case'back-problem':service.backToProblem();break;
+   case'paper-submit':{const input=paperInput(app);service.submitChoice(input.choiceId,input.confirmed);break;}
    case'submit':{const value=app.querySelector<HTMLInputElement>('input[name="outcome"]:checked')?.value;if(!value)throw new Error('結果を選んでください。');const pre=app.querySelector<HTMLSelectElement>('#implicated-skill')?.value;service.submit(value as MockOutcome,value==='prerequisite'&&pre?pre:undefined);break;}
    case'explanation':service.explanation();break;
    case'next':{const acquired=service.snapshot.result?.acquired;service.next();if(acquired)service.navigate('map');break;}
