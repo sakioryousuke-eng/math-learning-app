@@ -1,5 +1,6 @@
 import {renderCountPrototype,bindCountPrototype} from './count-family-prototype.ts';
 import {renderPlacementPrototype,bindPlacementPrototype} from './placement-family-prototype.ts';
+import {renderIntegratedPrototype,bindIntegratedPrototype} from './integrated-family-prototype.ts';
 import {renderAxisPrototype,bindAxisPrototype} from './axis-family-prototype.ts';
 import {renderFamilyPrototype,bindFamilyPrototype} from './family-prototype.ts';
 import {paperSubmission,toPaperChecks,backPaperChoices,paperInput} from './paper-submission.ts';
@@ -40,7 +41,7 @@ const skillName=(id:string|null)=>master.skills.find(s=>s.id===id)?.name??'次�
 const button=(label:string,action:string,secondary=false,disabled=false)=>`<button class="${secondary?'secondary':'primary'}" data-action="${action}" ${disabled?'disabled':''}>${label}</button>`;
 const symbols:Record<Rating,string>={success:'○',partial:'△',failure:'×',unobserved:'—'};
 const dimensions:Record<Dimension,string>={understanding:'問題理解',modeling:'数学化',method:'着眼・方針',conditions:'条件・場合分け',calculation:'変形・計算',expression:'答案表現',conclusion:'結論・検証'};
-let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false,axisFamilyOpen=false,countFamilyOpen=false,placementFamilyOpen=false;
+let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false,axisFamilyOpen=false,countFamilyOpen=false,placementFamilyOpen=false,integratedFamilyOpen=false;
 const openWorlds=new Map<string,boolean>();
 let realMode=false,realBusy=false,selectedImage:Awaited<ReturnType<typeof fileToImage>>|null=null;
 let generation=0,controller:AbortController|null=null;
@@ -118,13 +119,16 @@ function render(){
  if(verifyEnabled&&axisFamilyOpen)content=renderAxisPrototype();
  if(verifyEnabled&&countFamilyOpen)content=renderCountPrototype();
  if(verifyEnabled&&placementFamilyOpen)content=renderPlacementPrototype();
+ if(verifyEnabled&&integratedFamilyOpen)content=renderIntegratedPrototype();
  app.innerHTML=`<header class="site-header"><div class="brand"><span class="brand-icon">∑</span><span>数学の道<small>二次関数 · 教材検証版</small></span></div><span class="header-badge">${learning.namespace.startsWith('demo:')?'DEMO':'LOCAL'}</span></header><div class="shell">${dev}<p class="status-message" role="status">${saving?'保存中…':'端末に保存済み'} · ${learning.namespace.startsWith('demo:')?'開発デモ':'通常学習'}</p><main id="main" tabindex="-1">${error?`<div class="error" role="alert">${esc(error)}</div>`:''}${s.notice?`<p class="status-message" role="status">${esc(s.notice)}</p>`:''}${content}</main></div><nav class="bottom-nav" aria-label="メインナビ"><button data-action="home" ${s.screen==='home'||s.screen==='diagnostic'?'aria-current="page"':''}><span>⌂</span>ホーム</button><button data-action="map" ${s.screen==='map'?'aria-current="page"':''}><span>⋮</span>攻略マップ</button><button data-action="records" ${s.screen==='records'?'aria-current="page"':''}><span>▤</span>記録</button></nav>`;
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作4 2解の位置・区間条件','placement-family-open',true));
+ if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作5 二次関数・総合判断','integrated-family-open',true));
  for(const input of app.querySelectorAll<HTMLInputElement>('.image-inputs input'))input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void chooseImage(file);});
  app.querySelector('details.dev')?.addEventListener('toggle',e=>{devOpen=(e.target as HTMLDetailsElement).open;});
  app.querySelector<HTMLSelectElement>('#profile')?.addEventListener('change',e=>{const value=(e.target as HTMLSelectElement).value;void act(()=>{},()=>value==='student'?learning.useStudent():learning.useDemo(value as Profile));});
  if(verifyEnabled&&countFamilyOpen)bindCountPrototype(app,render,()=>{countFamilyOpen=false;render();});
  if(verifyEnabled&&placementFamilyOpen)bindPlacementPrototype(app,render,()=>{placementFamilyOpen=false;render();});
+ if(verifyEnabled&&integratedFamilyOpen)bindIntegratedPrototype(app,render,()=>{integratedFamilyOpen=false;render();});
  if(verifyEnabled&&axisFamilyOpen)bindAxisPrototype(app,render,()=>{axisFamilyOpen=false;render();});
  if(verifyEnabled&&familyOpen)bindFamilyPrototype(app,render,()=>{familyOpen=false;render();});
  bindPreview(app,render); bindDynamicQuadratic(app);
@@ -138,11 +142,13 @@ async function act(run:()=>void,operation?:()=>Promise<void>){
 }
 app.addEventListener('click',e=>{
  const target=(e.target as HTMLElement).closest<HTMLButtonElement>('button');if(!target||target.disabled)return;
- if(target.dataset.boundary!==undefined||target.dataset.boundaryIndex!==undefined||target.dataset.familyAction!==undefined||target.dataset.axisAction!==undefined||target.dataset.countAction!==undefined||target.dataset.placementAction!==undefined)return;
+ if(target.dataset.boundary!==undefined||target.dataset.boundaryIndex!==undefined||target.dataset.familyAction!==undefined||target.dataset.axisAction!==undefined||target.dataset.countAction!==undefined||target.dataset.placementAction!==undefined||target.dataset.integratedAction!==undefined)return;
  if(target.dataset.unit){detailsUnit=detailsUnit===target.dataset.unit?null:target.dataset.unit;render();return;}
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='integrated-family-open'){if(verifyEnabled){integratedFamilyOpen=true;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
+ if(integratedFamilyOpen)integratedFamilyOpen=false;
  if(action==='placement-family-open'){if(verifyEnabled){placementFamilyOpen=true;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(placementFamilyOpen)placementFamilyOpen=false;
  if(action==='count-family-open'){if(verifyEnabled){countFamilyOpen=true;axisFamilyOpen=false;familyOpen=false;render();}return;}
