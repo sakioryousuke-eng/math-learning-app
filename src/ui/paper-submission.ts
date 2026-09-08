@@ -1,4 +1,5 @@
-import {paperSpecs,shuffledChoices} from '../grading/paper-choices.ts';
+import {shuffledChoices} from '../grading/paper-choices.ts';
+import {allPaperSpecs as paperSpecs} from '../bank/paper.ts';
 import type {PaperChoice} from '../grading/paper-choices.ts';
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 let draft:{token:string;id:string;choices:PaperChoice[];choice:string;checks:boolean}|null=null;

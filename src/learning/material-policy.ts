@@ -1,8 +1,10 @@
 import type {LearningCatalog} from '../curriculum/types.ts';
 import type {Assessment,Learner} from '../math-master/types.ts';
 import type {Problem} from '../services/catalog.ts';
+export function verifiedGenerated(c:LearningCatalog,p:Problem){return p.reviewStatus==='verified-generated'&&p.purpose==='practice'&&c.generatedBank?.some(b=>b.id===p.id&&b.unitId==='QFN'&&b.skillId===p.skillId&&b.verificationStatus==='verified-generated'&&b.validation.oracle&&b.validation.mathematics&&b.validation.uniqueChoices)===true;}
 export function canUse(c:LearningCatalog,p:Problem,context:Assessment['context']){
  if(!c.reviewedOnly)return true;
+ if(verifiedGenerated(c,p))return context==='practice'||context==='warmup';
  if(p.reviewStatus!=='reviewed')return false;
  const roles=c.lessonMetadata?.find(l=>l.problem.id===p.id)?.roles??[];
  return context==='repair'?roles.includes('repair'):context==='max'?roles.includes('max'):context==='diagnostic'?roles.includes('integration')||roles.includes('basic'):roles.includes('basic')||roles.includes('integration');
@@ -11,7 +13,7 @@ export function stableReady(c:LearningCatalog,skillId:string,assessments:Assessm
  const history=assessments.filter(a=>a.skillId===skillId&&a.context!=='warmup');
  const recent=history.slice(history.findLastIndex(a=>!a.solved)+1);
  const policy=c.stablePolicies?.[skillId];
- const success=recent.filter(a=>a.solved&&a.readable&&a.independent&&(!policy||policy.dimensions.every(d=>a.dimensions[d]==='success'))&&(!c.reviewedOnly||c.problems.some(p=>p.id===a.problemId&&p.reviewStatus==='reviewed')));
+ const success=recent.filter(a=>a.solved&&a.readable&&a.independent&&(!policy||policy.dimensions.every(d=>a.dimensions[d]==='success'))&&(!c.reviewedOnly||c.problems.some(p=>p.id===a.problemId&&(p.reviewStatus==='reviewed'||verifiedGenerated(c,p)))));
  const unique=new Map(success.map(a=>[c.problems.find(p=>p.id===a.problemId)?.independenceKey??a.problemId,a]));
  if(unique.size<(policy?.minimum??2))return false;
  const situations=new Set([...unique.values()].map(a=>c.lessonMetadata?.find(l=>l.problem.id===a.problemId)?.situation).filter(Boolean));

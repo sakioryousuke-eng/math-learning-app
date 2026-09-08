@@ -4,7 +4,10 @@ import {renderIntegratedPrototype,bindIntegratedPrototype} from './integrated-fa
 import {renderAxisPrototype,bindAxisPrototype} from './axis-family-prototype.ts';
 import {renderFamilyPrototype,bindFamilyPrototype} from './family-prototype.ts';
 import {paperSubmission,toPaperChecks,backPaperChoices,paperInput} from './paper-submission.ts';
-import {paperCurriculum as curriculum,paperSpecs} from '../grading/paper-choices.ts';
+import {bankCurriculum as curriculum,bankById} from '../bank/catalog.ts';
+import {allPaperSpecs as paperSpecs} from '../bank/paper.ts';
+import {verifiedGenerated} from '../learning/material-policy.ts';
+import {bankExplanation,bankDetails,bindBankGraph,renderBank,bindBank} from './qfn-bank.ts';
 import {bindDynamicQuadratic} from './dynamic-quadratic.ts';
 import {profileLabels} from '../services/learning-service.ts';
 import {quadraticExplanation} from './quadratic-explanation.ts';
@@ -42,6 +45,7 @@ const button=(label:string,action:string,secondary=false,disabled=false)=>`<butt
 const symbols:Record<Rating,string>={success:'○',partial:'△',failure:'×',unobserved:'—'};
 const dimensions:Record<Dimension,string>={understanding:'問題理解',modeling:'数学化',method:'着眼・方針',conditions:'条件・場合分け',calculation:'変形・計算',expression:'答案表現',conclusion:'結論・検証'};
 let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false,axisFamilyOpen=false,countFamilyOpen=false,placementFamilyOpen=false,integratedFamilyOpen=false;
+let bankOpen=false;
 const openWorlds=new Map<string,boolean>();
 let realMode=false,realBusy=false,selectedImage:Awaited<ReturnType<typeof fileToImage>>|null=null;
 let generation=0,controller:AbortController|null=null;
@@ -76,7 +80,7 @@ function render(){
   content=`<div class="eyebrow">LEARNING / 今日の学習</div><h1>学習を、つなげよう。</h1><div class="metrics"><div><span>人間力</span><strong>Lv.${h.humanExp.level}</strong><small>${p.humanExp} EXP · 行動の記録</small></div><div><span>数学力</span><strong>Rank ${h.rank.value}</strong><small>仮表示 · MAX ${p.maxUnits.length} 単元</small></div></div>${s.ended?'<div class="notice success"><b>今日の一区切りを達成</b><p>ここで終えても、続けても大丈夫です。</p></div>':''}<section class="quest"><div class="eyebrow light">今日のクエスト</div><h2>${esc(quest)}</h2><p class="quest-skill">${esc(skillName(skillId??null))}</p>${p.activeUnit?`<div class="quest-route"><span>${esc(active)}を攻略中</span><span>${stableCount} / ${unitSkills} 安定</span></div><progress max="${unitSkills}" value="${stableCount}" aria-label="単元内の安定技能数"></progress>`:''}${button(s.current&&!s.result?'表示中の問題に戻る':'学習を続ける','continue',false,s.task.kind==='complete')}</section><section class="max-link"><div><span class="star">☆</span><h2>MAXに挑戦</h2><p>進度に関係なく、実戦で確かめる。</p></div>${button('挑戦を確認 →','max',true,!s.unitId)}</section>${p.repair?`<div class="notice"><b>${esc(active)}を攻略中</b><p>${esc(skillName(p.repair.repairSkillId))}を修復中 → 完了後に元問題へ復帰</p></div>`:''}<p class="muted">固定の問題数や制限時間ではなく、数学的な一区切りを大切にします。</p>`;
  }else if(s.screen==='diagnostic'){
   content=s.diagnosisFinished?`<div class="eyebrow">DIAGNOSIS / 診断完了</div><h1>ここから始めよう。</h1><section class="panel"><span class="pill">開始する単元</span><h2>${esc(active)}</h2><p>${s.task.kind==='max'?'内部技能は安定しています。再授業せず、MAXに挑戦できます。':`${esc(skillName('skillId'in s.task?s.task.skillId??null:null))}から、必要なところを進めます。`}</p><p class="muted">必要な統合課題で合格した範囲は安定した技能として記録します。MAXは独立した実戦成功の証拠で判定します。</p>${button('ホームへ','accept-diagnosis')}</section>`:`<div class="eyebrow">DIAGNOSIS / 初回のみ</div><h1>今の力から、始める。</h1><p class="lead">知っている内容を繰り返さないために、統合問題で出発点を確かめます。</p><section class="panel"><span class="pill">${esc(unitName(curriculum.mainUnitIds[Math.min(s.diagUnit,curriculum.mainUnitIds.length-1)]))}</span><h2>紙とペンを用意してください</h2><ol class="steps"><li>問題を見て、紙に解く</li><li>仮答案を選んで提出する</li><li>必要な技能だけ、追加で確認する</li></ol><p class="muted">確認済みの統合課題で診断します。二次関数は3題。できないときは関係する枝だけ確認します。</p>${button(s.current&&!s.result?'診断の問題に戻る':'診断を始める','continue')}</section>`;
- }else if(s.screen==='problem'&&s.problem&&s.problem.reviewStatus!=='reviewed'){
+ }else if(s.screen==='problem'&&s.problem&&s.problem.reviewStatus!=='reviewed'&&!verifiedGenerated(curriculum,s.problem)){
   content='<h1>教材の確認待ちです</h1><p>この問題の履歴と復帰先は保持しています。数学的な検証が終わるまで再出題を保留します。</p>';
  }else if(s.screen==='problem'&&s.problem){
   content=`<div class="eyebrow">${esc(label)}${hideMethod?'':' / '+esc(unitName(p.activeUnit??master.skills.find(x=>x.id===s.problem?.skillId)?.unitId??null))}</div><div class="problem-heading"><h1>${hideMethod?'実戦・統合問題':esc(skillName(s.problem.skillId))}</h1><span class="pill">${hideMethod?'方法指定なし':esc(s.problem.topic)}</span></div>${p.repair?`<div class="notice"><b>${esc(active)}を攻略中</b><p>${esc(skillName(p.repair.repairSkillId))}だけを整備しています。</p></div>`:''}<section class="problem-paper"><div class="paper-caption">問題 <span>${s.current?.context==='max'?'ノーヒント・根拠を含む答案':s.current?.context==='warmup'?'習熟判定には使いません':'途中式と根拠も残しましょう'}</span></div><p class="math-text">${esc(s.problem.prompt)}</p></section>${lessonPanel(curriculum.lessonMetadata?.find(l=>l.problem.id===s.problem!.id),service.exportCheckpoint().hintedProblems.includes(s.problem.id))}<p class="paper-hint">✎ 紙に解いてください</p>${button('仮答案を提出する','submission')}${gradingSpecs.some(g=>g.problemId===s.problem!.id)?button('実答案を撮影／選択','real-submission',true):''}<p class="muted">紙の答案と解説を照合して仮採点を選びます。AIによる実答案評価は未接続です。</p>`;
@@ -111,8 +115,11 @@ function render(){
   if(s.screen==='result'&&s.result?.assessment.choice){const record=s.result.assessment.choice;content=content.replace('✓ 正解',s.current?.context==='max'?'✓ 完全合格':'✓ 最終結論は正しい');content+=`<p class="notice">最終結論は選択内容から判定しました。根拠・条件などは本人の自己申告であり、アプリが紙答案を読んだ判定ではありません。</p>${record.missing.length?`<p>未確認：${record.missing.map(id=>esc(paperSpecs[s.problem!.id].checks.find(c=>c.id===id)?.label??id)).join('／')}</p>`:''}`;}
  }
  if(s.screen==='max'&&s.unitId==='QFN')content=`<h1>二次関数 MAX</h1><section class="max-card"><h2>1題を紙に解き切る</h2><p>6択で最終結論を提出し、紙答案の必須要素を確認します。</p><p>最終結論が正しく、必須答案要素がすべて揃った1回の成功でMAXを取得します。</p><p>3回成功・7日以内・1日1回の制限はありません。失敗後も別の候補問題へ再挑戦できます。</p></section>${button('MAX問題に挑戦','start-max',false,!!s.current&&!s.result)}<p>紙の根拠・条件・可読性は自己申告で確認します。3題は独立した候補問題です。</p>`;
- if(s.screen==='explanation'&&s.problem?.skillId.startsWith('QF-')&&s.result&&s.result.outcome!=='prerequisite')content=`<h1>答えと解説</h1>${quadraticExplanation(s.problem)}${button(p.repair?'必要な技能へ':s.result.repaired?'元問題へ復帰':'次へ','next')}`;
- if(s.problem&&s.problem.reviewStatus!=='reviewed'&&['problem','submission','result','explanation'].includes(s.screen))content='<h1>教材確認待ち</h1><p>旧問題の履歴と復帰先は保持しています。数学的検証が終わるまで出題と解説表示を保留します。</p>';
+ const bankProblem=s.problem?bankById.get(s.problem.id):undefined;
+ if(s.screen==='explanation'&&s.problem?.skillId.startsWith('QF-')&&s.result&&s.result.outcome!=='prerequisite')content=`<h1>答えと解説</h1>${bankProblem?bankExplanation(bankProblem):quadraticExplanation(s.problem)}${button(p.repair?'必要な技能へ':s.result.repaired?'元問題へ復帰':'次へ','next')}`;
+ if(verifyEnabled&&bankProblem&&s.result&&['result','explanation'].includes(s.screen))content+=bankDetails(bankProblem,s.result.assessment.choice?.choiceId);
+ if(s.screen==='max'&&p.activeUnit==='QFN'&&master.skills.filter(x=>x.unitId==='QFN'&&!curriculum.retiredSkillIds?.includes(x.id)).every(x=>p.skills[x.id]==='stable'))content+=button('MAX前の総合練習','prepare-qfn',true,!!s.current&&!s.result);
+ if(s.problem&&s.problem.reviewStatus!=='reviewed'&&!verifiedGenerated(curriculum,s.problem)&&['problem','submission','result','explanation'].includes(s.screen))content='<h1>教材確認待ち</h1><p>旧問題の履歴と復帰先は保持しています。数学的検証が終わるまで出題と解説表示を保留します。</p>';
  if(s.screen==='diagnostic'&&!s.diagnosisFinished)content='<div class="notice">二次関数と必要な因数分解教材を検証しています。他単元は教材確認待ちのため、通常の初回診断は保留します。開発デモでは二次関数を確認できます。</div>'+content;
  if(p.activeUnit==='QFN'&&s.screen==='home')content+=`<section class="panel"><h2>二次関数の道順</h2><ol>${steps.map(step=>`<li>STEP ${step.number} ${esc(step.title)} (${step.skills.filter(id=>p.skills[id]==='stable').length}/${step.skills.length})</li>`).join('')}</ol></section>`;
  if(verifyEnabled&&familyOpen)content=renderFamilyPrototype();
@@ -120,9 +127,13 @@ function render(){
  if(verifyEnabled&&countFamilyOpen)content=renderCountPrototype();
  if(verifyEnabled&&placementFamilyOpen)content=renderPlacementPrototype();
  if(verifyEnabled&&integratedFamilyOpen)content=renderIntegratedPrototype();
+ if(verifyEnabled&&bankOpen)content=renderBank();
  app.innerHTML=`<header class="site-header"><div class="brand"><span class="brand-icon">∑</span><span>数学の道<small>二次関数 · 教材検証版</small></span></div><span class="header-badge">${learning.namespace.startsWith('demo:')?'DEMO':'LOCAL'}</span></header><div class="shell">${dev}<p class="status-message" role="status">${saving?'保存中…':'端末に保存済み'} · ${learning.namespace.startsWith('demo:')?'開発デモ':'通常学習'}</p><main id="main" tabindex="-1">${error?`<div class="error" role="alert">${esc(error)}</div>`:''}${s.notice?`<p class="status-message" role="status">${esc(s.notice)}</p>`:''}${content}</main></div><nav class="bottom-nav" aria-label="メインナビ"><button data-action="home" ${s.screen==='home'||s.screen==='diagnostic'?'aria-current="page"':''}><span>⌂</span>ホーム</button><button data-action="map" ${s.screen==='map'?'aria-current="page"':''}><span>⋮</span>攻略マップ</button><button data-action="records" ${s.screen==='records'?'aria-current="page"':''}><span>▤</span>記録</button></nav>`;
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作4 2解の位置・区間条件','placement-family-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作5 二次関数・総合判断','integrated-family-open',true));
+ if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('本番問題バンク 90題を確認','bank-open',true));
+ if(verifyEnabled&&bankOpen)bindBank(app,render);
+ if(bankProblem&&s.screen==='explanation')bindBankGraph(app,bankProblem);
  for(const input of app.querySelectorAll<HTMLInputElement>('.image-inputs input'))input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void chooseImage(file);});
  app.querySelector('details.dev')?.addEventListener('toggle',e=>{devOpen=(e.target as HTMLDetailsElement).open;});
  app.querySelector<HTMLSelectElement>('#profile')?.addEventListener('change',e=>{const value=(e.target as HTMLSelectElement).value;void act(()=>{},()=>value==='student'?learning.useStudent():learning.useDemo(value as Profile));});
@@ -147,6 +158,9 @@ app.addEventListener('click',e=>{
  const action=target.dataset.action;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
+ if(action==='bank-open'){if(verifyEnabled){bankOpen=true;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
+ if(action==='bank-preview'&&verifyEnabled){const id=app.querySelector<HTMLSelectElement>('#bank-problem')!.value;bankOpen=false;void act(()=>{},()=>learning.useReviewedPreview(id,false));return;}
+ if(bankOpen)bankOpen=false;
  if(action==='integrated-family-open'){if(verifyEnabled){integratedFamilyOpen=true;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(integratedFamilyOpen)integratedFamilyOpen=false;
  if(action==='placement-family-open'){if(verifyEnabled){placementFamilyOpen=true;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
@@ -173,6 +187,7 @@ app.addEventListener('click',e=>{
    case'introduction':service.showIntroduction();break;
    case'home':case'map':case'records':case'max':service.navigate(action);break;
    case'continue':service.continueLearning();break;
+   case'prepare-qfn':service.prepareQfn();break;
    case'accept-diagnosis':service.acceptDiagnosis();break;
    case'submission':clearImage();realMode=false;service.submission();break;
    case'real-submission':clearImage();realMode=true;service.submission();break;

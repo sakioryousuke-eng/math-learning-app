@@ -14,3 +14,7 @@
 .paper-choice-text{white-space:pre-line;line-height:1.75}.paper-checks{display:flex;flex-wrap:wrap;gap:.6rem;margin:1rem 0}.paper-checks label{display:flex;align-items:center;gap:.5rem;border:1px solid #9db4c5;border-radius:18px;padding:.7rem;min-height:48px;background:#fff;cursor:pointer}.paper-checks label:has(input:checked){background:#dff2ec;border-color:#168068}.paper-checks input{width:20px;height:20px;flex:0 0 20px}
 .family-prototype select{width:100%;max-width:100%;min-height:48px;border:1px solid #9db4c5;border-radius:6px;padding:.4rem;font-size:1rem}.family-prototype .panel h3{font-size:1rem}.family-prototype summary{min-height:44px;cursor:pointer}.family-prototype .panel{overflow-wrap:anywhere}
 .integrated-prototype pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+.bank-review {min-width:0;overflow-wrap:anywhere}
+.bank-review label {display:block;margin:12px 0}
+.bank-review select {display:block;width:100%;min-width:0;max-width:100%;min-height:44px}
+.bank-json {white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;font-size:.8rem}

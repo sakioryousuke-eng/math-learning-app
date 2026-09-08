@@ -1,5 +1,7 @@
 import {legacyCatalog} from './catalog.ts';
-import {paperSpecs,choiceAssessment} from '../grading/paper-choices.ts';
+import {choiceAssessment} from '../grading/paper-choices.ts';
+import {allPaperSpecs as paperSpecs,generatedEvidence} from '../bank/paper.ts';
+import {selectQfnPractice} from '../bank/selector.ts';
 import type {LearningCatalog} from '../curriculum/types.ts';
 import type {Problem} from './catalog.ts';
 import {gradeMock,causes} from './mock-grader.ts';
@@ -82,6 +84,7 @@ export class LearningService {
   private practice(skillId:string,context:Assessment['context']='practice'):Problem {
     const pool=this.problems.filter(p=>p.skillId===skillId&&p.purpose==='practice'&&canUse(this.catalog,p,context));
     const previous=this.current?.problemId??this.used.at(-1);
+    if(context==='practice'||context==='warmup'){const selected=selectQfnPractice(this.catalog,this.learner,skillId,pool,this.used);if(selected)return selected;}
     const next=pool.find(p=>!this.used.includes(p.id))??pool.find(p=>p.id!==previous);
     if(!next)throw new Error('この技能は教材の数学的確認待ちです。検証済みの別問題がそろうまで学習を保留します。');return next;
   }
@@ -144,6 +147,14 @@ export class LearningService {
     if(!this.learner.activeUnit)startUnit(this.master,this.learner,unitId);
     this.open(next,'max');
   }
+  prepareQfn(){
+    if(!this.learner.diagnosticCompleted||this.learner.activeUnit!=='QFN'||this.learner.repair||this.learner.resume||this.current&&!this.result)throw new Error('現在の学習を完了してから練習してください。');
+    const skills=this.master.skills.filter(s=>s.unitId==='QFN'&&!this.catalog.retiredSkillIds?.includes(s.id));
+    if(!skills.every(s=>this.learner.skills[s.id]==='stable'))throw new Error('各技能の学習を先に進めてください。');
+    const pool=this.problems.filter(p=>p.skillId==='QF-INTEGRATE'&&canUse(this.catalog,p,'practice')&&p.purpose==='practice');
+    const next=selectQfnPractice(this.catalog,this.learner,'QF-INTEGRATE',pool,this.used,true);if(!next)throw new Error('練習教材がありません。');
+    this.practiceFocus='QF-INTEGRATE';this.open(next,'practice');
+  }
   submit(outcome:MockOutcome,implicatedSkill?:string){
     if(!this.devMode)throw new Error('仮採点は開発確認モードだけで利用できます。');
     if(!this.current||this.result||this.screen!=='submission')throw new Error('この答案は提出できません。');
@@ -164,6 +175,8 @@ export class LearningService {
     const base=gradeMock(p,'correct',`event-${this.serial+1}`,this.now,this.current.context);
     base.independent=!this.hintedProblems.includes(p.id);
     const a=choiceAssessment(spec,choiceId,confirmed,base);
+    const bankProblem=this.catalog.generatedBank?.find(b=>b.id===p.id);
+    if(bankProblem)a.generatedEvidence=generatedEvidence(bankProblem,choiceId);
     if(this.current.context==='max'&&(!this.paperMax(this.master.skills.find(s=>s.id===p.skillId)!.unitId)||!['OPEN','ACTIVE'].includes(unitStatus(this.master,this.learner,'QFN'))||this.learner.activeUnit&&this.learner.activeUnit!=='QFN'))throw new Error('MAXに挑戦できる単元ではありません。');
     this.serial++;
     this.applyGrading(a.solved?'correct':a.tags.includes('case_split')?'case_split':'calculation',a,undefined,[]);
@@ -270,7 +283,7 @@ export class LearningService {
   openReviewedPreview(problemId:string,stable=false){
     if(!this.devMode)throw new Error('開発モードのみ利用できます。');
     const problem=this.problem(problemId);
-    if(problem.reviewStatus!=='reviewed')throw new Error('検証済みの教材だけを選択してください。');
+    if(problem.reviewStatus!=='reviewed'&&!this.catalog.generatedBank?.some(b=>b.id===problem.id&&b.verificationStatus==='verified-generated'))throw new Error('検証済みの教材だけを選択してください。');
     this.switchProfile('new');
     const p=this.learner,skill=this.master.skills.find(s=>s.id===problem.skillId)!;
     const seedUnit=(id:string)=>{for(const pre of this.master.units.find(u=>u.id===id)!.prerequisites){seedUnit(pre);if(!p.maxUnits.includes(pre))p.maxUnits.push(pre);for(const s of this.master.skills.filter(s=>s.unitId===pre))p.skills[s.id]='stable';}};

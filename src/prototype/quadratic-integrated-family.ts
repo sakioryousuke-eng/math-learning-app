@@ -31,8 +31,8 @@ const candidate=(type:string,answer:IntegratedAnswer,diagnosticScore:number,reas
 const valuesAnswer=(answer:AxisAnswer,k:number):IntegratedAnswer=>{const v=evaluateCases(answer,k);return {kind:'values',min:v.min[0],max:v.max[0]};};
 const constraintText=(c:ExtremaConstraint)=>`${c.key==='min'?'最小値':'最大値'}${c.op==='eq'?'=':c.op==='ge'?'≧':'≦'}${c.value}`;
 function constraintHolds(c:ExtremaConstraint,value:number){return c.op==='eq'?Math.abs(value-c.value)<1e-8:c.op==='ge'?value>=c.value-1e-8:value<=c.value+1e-8;}
-interface ExtSeed {index:number;level:Draft['level'];expression:QuadraticExpression;L:number;R:number;mode:'fixed'|'cases'|'inverse';constraints?:ExtremaConstraint[];placement?:PlacementParameters;prompt?:string;signature:string[]}
-function makeExtrema(s:ExtSeed){
+export interface ExtSeed {index:number;level:Draft['level'];expression:QuadraticExpression;L:number;R:number;mode:'fixed'|'cases'|'inverse';constraints?:ExtremaConstraint[];placement?:PlacementParameters;prompt?:string;signature:string[]}
+export function makeExtrema(s:ExtSeed){
  const c=extremaComponent(s.expression,s.L,s.R),constraints=s.constraints??[],placement=s.placement?placementModel(s.placement):undefined;
  const conditionSets=constraints.map(r=>({name:constraintText(r),set:constrainExtrema(c,r)}));if(placement)conditionSets.push({name:targetText(placement.parameters.target),set:placement.answer});
  const convert=(a:AxisAnswer):IntegratedAnswer=>s.mode==='fixed'?valuesAnswer(a,0):s.mode==='cases'?{kind:'cases',cases:a}:setAnswer(intersectSets([...constraints.map(r=>constrainExtrema(c,r,a)),...(placement?[placement.answer]:[])]));

@@ -1,6 +1,7 @@
 import {validateMaster} from '../math-master/validate.ts';
 import requiredMaxRules from '../../data/curriculum-requirements.json' with {type:'json'};
 import type {Curriculum} from './types.ts';
+import {verifiedGenerated} from '../learning/material-policy.ts';
 // Versioned audit policy is separate from the editable route definitions.
 const requirements=new Map<string,string[]>(Object.entries(requiredMaxRules));
 function assert(ok:unknown,message:string):asserts ok{if(!ok)throw new Error(message);}
@@ -31,7 +32,7 @@ export function validateCurriculum(c:Curriculum){
  for(const g of c.problemGuides)assert(pids.has(g.problemId)&&g.roles.length&&g.roles.every(r=>['introduction','basic','repair','integration','max'].includes(r)),'Invalid problem role');
  if(c.reviewedOnly){
   for(const p of c.problems){
-   assert(p.reviewStatus==='reviewed'||p.reviewStatus==='unreviewed','Missing review status');
+   assert(p.reviewStatus==='reviewed'||p.reviewStatus==='unreviewed'||verifiedGenerated(c,p),'Missing review status');
    const g=c.problemGuides.find(g=>g.problemId===p.id)!;assert(g.reviewStatus===p.reviewStatus,'Review status disagreement');
    if(p.reviewStatus==='reviewed')assert(c.lessonMetadata?.some(l=>l.problem.id===p.id&&l.review.status==='reviewed'&&l.review.checks.length>=15),'Missing mathematical review record');
   }
