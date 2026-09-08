@@ -22,6 +22,8 @@ Each record is checked at a 1,001-point grid, every exact boundary and both near
 
 The builder rejects non-finite/large coefficients, unintended empty answers, non-unique or equivalent choices, invalid graph viewports, missing/excessively long explanations, duplicate prompts, identical answers in the same structure, and more than three variants per family/structure. Current accepted bank: 82 signatures, maximum two records per signature. Six equal-answer groups remain, each requiring different structural judgments. Three candidates were rejected: two lacked three distinct diagnostic errors; one repeated the same answer and structure.
 
+Equal-score F5 distractors explicitly use Japanese collation. This preserves the development environment's ordering on the English-language CI host; its default locale must not change the published static choices.
+
 ## Learning integration
 
 Only registered `verified-generated` QFN practice records join the existing `reviewed` catalog. Old `unreviewed` questions remain excluded. Diagnostic, repair and MAX selection continue to use the existing reviewed material. The Skill/DAG/active-unit rules are unchanged.

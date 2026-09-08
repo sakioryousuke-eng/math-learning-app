@@ -19,6 +19,11 @@ import {lessonPanel} from '../src/ui/quadratic-view.ts';
 import {unitStatus} from '../src/math-master/unlock.ts';
 const rebuilt=buildQfnBank();
 test('static artifact is reproducible after independent oracle and semantic choice checks',()=>assert.deepEqual(JSON.parse(JSON.stringify(rebuilt)),bankArtifact));
+test('English build-host collation does not change Japanese distractor tie-breaks',()=>{
+ const compare=String.prototype.localeCompare;
+ String.prototype.localeCompare=function(that:string,locales?:string|string[],options?:Intl.CollatorOptions){return compare.call(this,that,locales??'en',options);};
+ try{assert.deepEqual(JSON.parse(JSON.stringify(buildQfnBank())),bankArtifact);}finally{String.prototype.localeCompare=compare;}
+});
 for(const p of bankRecords)test(`production variant ${p.id}: original-expression oracle, boundaries, unique choices, metadata`,()=>{
  const checked=rebuilt.records.find(r=>r.id===p.id);assert.ok(checked,JSON.stringify(rebuilt.rejected));assert.ok(checked.validation.sampleCount>=1003);
  assert.equal(p.unitId,'QFN');assert.equal(p.verificationStatus,'verified-generated');assert.equal(p.purpose,'practice');
