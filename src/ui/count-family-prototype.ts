@@ -1,0 +1,34 @@
+import {countProblems,countGraphState,countPolynomialText} from '../prototype/quadratic-count-family.ts';
+import type {CountProblem} from '../prototype/quadratic-count-family.ts';
+import {dynamicQuadratic,bindDynamicQuadratic} from './dynamic-quadratic.ts';
+import type {DynamicSpec} from './dynamic-quadratic.ts';
+const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+const lines=(s:string)=>esc(s).replace(/\n/g,'<br>');
+export function countDynamicSpec(p:CountProblem):DynamicSpec{
+ const b=p.model.boundaries.map(r=>r.value),min=(b[0]??0)-2,max=(b.at(-1)??0)+2;
+ const regions=[`k＜${b[0]}`,...b.flatMap((v,i)=>[`k=${v}`,...(i<b.length-1?[`${v}＜k＜${b[i+1]}`]:[])]),`k＞${b.at(-1)}`];
+ return {parameter:'k',min,max,initial:b[0]??0,boundaries:b,regions,region:k=>{for(let i=0;i<b.length;i++){if(k<b[i])return i*2;if(k===b[i])return i*2+1;}return b.length*2;},graph:k=>countGraphState(p.model.parameters,k).original,comparisonGraph:k=>countGraphState(p.model.parameters,k).difference,
+ reason:k=>{const state=countGraphState(p.model.parameters,k);return `D=${Math.round(state.D*10000)/10000}。元の共有点も、差のグラフとx軸の共有点も${state.count}個です。${state.count===1?'D=0なので接する1点です。':state.count===0?'元の2グラフは交わらず、差のグラフもx軸と交わりません。':'図の交点のx座標が一致することを確認してください。'}`;}};
+}
+let current=0,phase:'problem'|'choices'|'result'='problem',selected='',notice='';let ordered:CountProblem['choices']=[];
+export function resetCountProblem(id:string){const i=countProblems.findIndex(p=>p.id===id);if(i<0)return;current=i;phase='problem';selected='';notice='';}
+export function renderCountResult(p:CountProblem,id:string){const c=p.choices.find(c=>c.choiceId===id),m=p.model;
+ return `<h2>${c?.correct?'最終結論は正しいです':'最終結論は未解決です'}</h2><p>紙の途中式は評価していません。1回の選択で弱点を確定しません。</p><section class="explanation quadratic-answer"><h2>考え方</h2><p>${esc(p.explanation.thinking)}</p><h2>解き方</h2>${p.explanation.steps.map(s=>`<p>${esc(s)}</p>`).join('')}<h2>グラフで確かめる</h2>${dynamicQuadratic(p.id,countDynamicSpec(p))}<h2>答え</h2><p class="answer-example">${lines(p.explanation.answer)}</p></section><details class="panel"><summary>検証情報：方程式・必要能力・弱点仮説・誤答選定</summary><h3>数学モデル</h3><p>共有点：${esc(m.equation)}</p><p>差の方程式：${esc(m.zeroEquation)}</p><p>A=${m.A}、B=${esc(countPolynomialText(m.B,'k'))}、C=${esc(countPolynomialText(m.C,'k'))}</p><p>D=${esc(m.discriminantText)}</p><p>境界：${m.boundaries.map(b=>`k=${esc(b.text)}`).join('、')}</p><h3>この問題で必要な能力</h3><ul>${p.problemRequirements.map(r=>`<li>${esc(r.description)}（${r.crossSkills.join('、')}）</li>`).join('')}</ul><h3>今回選択した誤答の弱点仮説</h3>${c?.mistakeHypotheses.map(h=>`<p>${esc(h.description)}。タグ：${h.weaknessTags.join('、')}／CrossSkill：${h.crossSkills.join('、')}</p>`).join('')||'<p>なし</p>'}<h3>4択と誤答候補</h3><p>正答：${lines(p.explanation.answer)}</p>${p.decisions.map(d=>`<section><h4>${d.selected?'採用':'除外'}：${d.type}${d.choice.choiceId===id?'（今回選択）':''}</h4><p>${lines(d.choice.text)}</p><p>diagnosticScore：${d.diagnosticScore}</p><p>診断価値：${esc(d.reason)}</p><p>理由：${esc(d.selectionReason)}</p><p>誤答モデル：A=${d.errorModel.A}、B=${esc(countPolynomialText(d.errorModel.B,'k'))}、C=${esc(countPolynomialText(d.errorModel.C,'k'))}、使用したD=${esc(countPolynomialText(d.errorModel.D,'k'))}</p></section>`).join('')}</details><details class="panel"><summary>教材レビューの確認ポイント</summary><p>共有点から方程式を作る意味、差を取る意味、実数解と共有点の個数の対応を確認してください。判別式ありきの説明になっていないか、接する1点と異なる2点が区別できるか、4択が自然な誤りか、第1・第2とは異なる判断が必要かも確認できます。</p></details>`;
+}
+export function renderCountPrototype(){const p=countProblems[current];const paper=`<section class="problem-paper"><p class="paper-caption">問題 ${p.index} / 12 ・ ${p.model.parameters.level}</p><p class="math-text">${esc(p.prompt)}</p></section>`;
+ const body=phase==='problem'?'<p>紙に途中式・条件・結論を書いてから進んでください。</p><button class="primary" data-count-action="choices">紙に解いたので4択へ</button>':phase==='choices'?`<fieldset class="answer-options"><legend>紙答案の最終結果を選ぶ</legend>${ordered.map(c=>`<label><input type="radio" name="count-choice" value="${c.choiceId}"/><span>${lines(c.text)}</span></label>`).join('')}</fieldset><button class="primary" data-count-action="submit">最終結論を提出する</button>`:renderCountResult(p,selected);
+ return `<div class="family-prototype"><h1>生成問題ファミリー試作3 共有点の個数と判別式</h1><p class="notice">検証専用の12題です。通常学習・stable・MAXには反映しません。まだreviewed教材ではありません。</p><label for="count-number">確認する問題</label><select id="count-number">${countProblems.map(q=>`<option value="${q.id}" ${p.id===q.id?'selected':''}>${q.index}. ${q.model.parameters.level}／${q.model.parameters.kind==='intercept'?'切片が変わる':q.model.parameters.kind==='slope'?'傾きが変わる':'固定点を通る直線'}／${q.model.parameters.target==='all'?'0・1・2個を分類':`${q.model.parameters.target}個の条件`}</option>`).join('')}</select>${paper}<p role="status">${esc(notice)}</p>${body}<button class="secondary" data-count-action="restart">この問題を最初から見る</button><button class="secondary" data-count-action="next">次の問題へ</button><button class="secondary" data-count-action="close">通常の検証画面へ戻る</button></div>`;
+}
+export function countAttempt(p:CountProblem,id:string,at:string){const c=p.choices.find(c=>c.choiceId===id);if(!c)throw new Error('Unknown count choice');return {problemId:p.id,parameters:p.model.parameters,choiceId:id,correct:c.correct,problemRequirements:p.problemRequirements,mistakeHypotheses:c.mistakeHypotheses,hypothesisOnly:true,at,generatorVersion:1};}
+export function bindCountPrototype(root:HTMLElement,render:()=>void,close:()=>void){const p=countProblems[current];bindDynamicQuadratic(root,{[p.id]:countDynamicSpec(p)});
+ root.querySelector<HTMLSelectElement>('#count-number')?.addEventListener('change',e=>{resetCountProblem((e.target as HTMLSelectElement).value);render();});
+ for(const button of root.querySelectorAll<HTMLButtonElement>('[data-count-action]'))button.addEventListener('click',()=>{
+  const action=button.dataset.countAction;if(action==='close'){close();return;}
+  if(action==='restart')resetCountProblem(p.id);if(action==='next')resetCountProblem(countProblems[(current+1)%countProblems.length].id);
+  if(action==='choices'){ordered=[...p.choices];for(let i=ordered.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ordered[i],ordered[j]]=[ordered[j],ordered[i]];}phase='choices';}
+  if(action==='submit'){const id=root.querySelector<HTMLInputElement>('input[name="count-choice"]:checked')?.value;if(!id){notice='紙答案に当てはまる結論を選んでください。';render();return;}
+   const record=countAttempt(p,id,new Date().toISOString());selected=id;phase='result';
+   try{const key='math-count-family-prototype:attempts:v1',saved=JSON.parse(localStorage.getItem(key)??'[]');if(!Array.isArray(saved))throw new Error('Invalid history');saved.push(record);localStorage.setItem(key,JSON.stringify(saved));notice='第3ファミリー専用の履歴に記録しました。通常学習の記録は変更していません。';}catch{notice='試作履歴を保存できませんでした。結果はこの画面で確認できます。';}
+  }render();root.querySelector('.family-prototype')?.scrollIntoView({block:'start'});
+ });
+}
