@@ -1,5 +1,5 @@
 export type Polynomial=[number,number,number];
-export interface ExplanationGraph {title:string;curves:{formula:string;coefficients:Polynomial}[];view:[number,number,number,number];domain?:[number,number];openRight?:boolean;caption:string;}
+export interface ExplanationGraph {title:string;curves:{formula:string;coefficients:Polynomial}[];view:[number,number,number,number];domain?:[number,number];openLeft?:boolean;openRight?:boolean;caption:string;}
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const value=([a,b,c]:Polynomial,x:number)=>a*x*x+b*x+c;
 const fmt=(x:number)=>String(Math.abs(x)<1e-8?0:Math.round(x*100)/100);
@@ -14,7 +14,7 @@ export function explanationGraph(g:ExplanationGraph){
  g.curves.forEach((curve,i)=>{
   const [a,b]=curve.coefficients;
   if(a!==0){const x=-b/(2*a),y=value(curve.coefficients,x);add(x,y,`${i+1}の頂点`);if(x>=left&&x<=right)lines.push(`<path d="M${X(x)},26V250" stroke="${colours[i%3]}" stroke-dasharray="5 5" opacity=".65"/>`);}
-  if(g.domain)g.domain.forEach((x,n)=>add(x,value(curve.coefficients,x),`${i+1}の${n?'右':'左'}端`,n===1&&g.openRight));
+  if(g.domain)g.domain.forEach((x,n)=>add(x,value(curve.coefficients,x),`${i+1}の${n?'右':'左'}端`,n===0?g.openLeft:g.openRight));
  });
  if(g.curves.length===1)for(const x of realRoots(g.curves[0].coefficients))add(x,0,'x軸との共有点');
  else {const f=g.curves[0].coefficients,h=g.curves[1].coefficients;const difference=f.map((v,i)=>v-h[i]) as Polynomial;const roots=realRoots(difference);for(const x of roots){add(x,value(f,x),roots.length===1&&difference[0]!==0?'接点':'共有点');lines.push(`<path d="M${X(x)},${Y(0)}V${Y(value(f,x))}" stroke="#677a87" stroke-dasharray="2 4"/>`);}}
