@@ -1,3 +1,4 @@
+import {tratioCurriculum} from '../tratio/catalog.ts';
 import {decodeDocument,PersistenceError} from '../persistence/model.ts';
 import {legacyCatalog} from '../services/catalog.ts';
 import {curriculum as previous} from './master.ts';
@@ -7,6 +8,16 @@ import type {LearningDocument} from '../persistence/model.ts';
 export function migrateDocument(raw:unknown,namespace:string,target:LearningCatalog,at:string):LearningDocument{
  if(typeof raw!=='object'||raw===null||!('curriculumVersion'in raw))return decodeDocument(raw,namespace,target);
  if(raw.curriculumVersion===target.version)return decodeDocument(raw,namespace,target);
+ if(target.version==='math-v0.8-tratio-bank'){
+  const old=migrateDocument(raw,namespace,tratioCurriculum,at),next=structuredClone(old);
+  next.migration={from:old.curriculumVersion,to:target.version,at,previousCheckpoint:structuredClone(old.checkpoint)};
+  // Reviewed progress, repair and resume survive. Old MAX attempts stay as history,
+  // but cannot establish a pass under the new fixed-candidate policy.
+  next.checkpoint.learner.maxUnits=next.checkpoint.learner.maxUnits.filter(id=>id!=='TRATIO');
+  next.curriculumVersion=target.version;
+  next.checkpoint.notice='三角比の練習問題と固定MAXを追加しました。これまでの新教材の学習状況は引き継いでいます。';
+  return decodeDocument(next,namespace,target);
+ }
  if(target.version==='math-v0.7-tratio-reviewed'){
   const old=migrateDocument(raw,namespace,bankCurriculum,at),next=structuredClone(old);
   next.migration={from:old.curriculumVersion,to:target.version,at,previousCheckpoint:structuredClone(old.checkpoint)};

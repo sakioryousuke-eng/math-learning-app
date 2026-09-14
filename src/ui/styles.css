@@ -23,3 +23,6 @@
 .tratio-figure svg text {font-size:12px;fill:#244353}
 .tratio-figure input[type=range] {width:100%;min-height:44px}
 .tratio-figure figcaption {font-size:.85rem;line-height:1.6}
+
+/* Static TRATIO figures and multi-part MAX conclusions at phone widths. */
+.tratio-production{min-width:0}.tratio-production select{max-width:100%;width:100%}.tratio-production svg{max-width:100%;height:auto}.tratio-production .bank-json{white-space:pre-wrap;overflow-wrap:anywhere}.paper-choice-text,.answer-example{overflow-wrap:anywhere}

@@ -13,13 +13,15 @@
     "dev": "vite --configLoader native --host 127.0.0.1 --port 5173 --strictPort",
     "bank:generate": "node scripts/build-qfn-bank.ts",
     "bank:check": "node scripts/build-qfn-bank.ts --check",
-    "build": "node scripts/build-qfn-bank.ts --check && tsc --noEmit && vite build --configLoader native",
-    "build:demo": "node scripts/build-qfn-bank.ts --check && tsc --noEmit && vite build --configLoader native --mode demo",
+    "build": "node scripts/build-qfn-bank.ts --check && node scripts/build-tratio-bank.ts --check && tsc --noEmit && vite build --configLoader native",
+    "build:demo": "node scripts/build-qfn-bank.ts --check && node scripts/build-tratio-bank.ts --check && tsc --noEmit && vite build --configLoader native --mode demo",
     "preview": "vite preview --configLoader native --host 127.0.0.1 --port 4173 --strictPort",
     "prepare:answers": "node scripts/prepare-answers.ts",
     "verify:prepared": "node scripts/evaluate-answers.ts",
     "verify:live": "node scripts/evaluate-answers.ts --live",
-    "build:pages": "node scripts/build-qfn-bank.ts --check && tsc --noEmit && vite build --configLoader native --base=/math-learning-app/"
+    "build:pages": "node scripts/build-qfn-bank.ts --check && node scripts/build-tratio-bank.ts --check && tsc --noEmit && vite build --configLoader native --base=/math-learning-app/",
+    "tratio:generate": "node scripts/build-tratio-bank.ts",
+    "tratio:check": "node scripts/build-tratio-bank.ts --check"
   },
   "devDependencies": {
     "@types/node": "24.3.0",

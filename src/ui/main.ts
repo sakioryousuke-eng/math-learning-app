@@ -1,4 +1,4 @@
-import {renderIntegratedTratioPrototype,bindIntegratedTratioPrototype} from '../prototype/tratio-integrated-view.ts';
+
 import {renderCountPrototype,bindCountPrototype} from './count-family-prototype.ts';
 import {renderPlacementPrototype,bindPlacementPrototype} from './placement-family-prototype.ts';
 import {renderIntegratedPrototype,bindIntegratedPrototype} from './integrated-family-prototype.ts';
@@ -6,11 +6,13 @@ import {renderAxisPrototype,bindAxisPrototype} from './axis-family-prototype.ts'
 import {renderFamilyPrototype,bindFamilyPrototype} from './family-prototype.ts';
 import {paperSubmission,toPaperChecks,backPaperChoices,paperInput} from './paper-submission.ts';
 import {bankById} from '../bank/catalog.ts';
-import {tratioCurriculum as curriculum,appPaperSpecs as paperSpecs} from '../tratio/catalog.ts';
+import {productionTratioCurriculum as curriculum,productionTratioPaperSpecs as paperSpecs,tratioBankById} from '../tratio-bank/catalog.ts';
+import {renderTratioBank,bindTratioBank,selectedTratioBank,tratioBankExplanation,tratioBankDetails} from '../tratio-bank/view.ts';
+import {tratioMaxReady} from '../tratio-bank/selector.ts';
 import {tratioById,tratioSteps} from '../tratio/lessons.ts';
 import {renderTratio,bindTratio,selectedTratio,tratioExplanation,tratioSupport,tratioDetails} from '../tratio/view.ts';
-import {renderRightPrototype,bindRightPrototype} from '../prototype/tratio-right-view.ts';
-import {renderGeneralPrototype,bindGeneralPrototype} from '../prototype/tratio-general-view.ts';
+
+
 import {bindCircle} from '../tratio/figures.ts';
 import {verifiedGenerated} from '../learning/material-policy.ts';
 import {bankExplanation,bankDetails,bindBankGraph,renderBank,bindBank} from './qfn-bank.ts';
@@ -52,7 +54,8 @@ const symbols:Record<Rating,string>={success:'○',partial:'△',failure:'×',un
 const dimensions:Record<Dimension,string>={understanding:'問題理解',modeling:'数学化',method:'着眼・方針',conditions:'条件・場合分け',calculation:'変形・計算',expression:'答案表現',conclusion:'結論・検証'};
 let error='',detailsUnit:string|null=null,devOpen=verifyQuery==='on',familyOpen=false,axisFamilyOpen=false,countFamilyOpen=false,placementFamilyOpen=false,integratedFamilyOpen=false;
 let bankOpen=false;
-let tratioOpen=false;
+let tratioOpen=false,tratioBankOpen=false;
+let rightPrototype:typeof import('../prototype/tratio-right-view.ts')|undefined,generalPrototype:typeof import('../prototype/tratio-general-view.ts')|undefined,integratedTratioPrototype:typeof import('../prototype/tratio-integrated-view.ts')|undefined;
 let tratioRightOpen=false;
 let tratioGeneralOpen=false;
 let tratioIntegratedOpen=false;
@@ -130,8 +133,14 @@ function render(){
  if(tratioLesson&&s.screen==='problem')content=content.replace('<section class="problem-paper">',tratioSupport(tratioLesson)+'<section class="problem-paper">');
  if(tratioLesson&&s.screen==='explanation')content=`<h1>答えと解説</h1>${tratioExplanation(tratioLesson)}${button(s.result?.repaired?'元問題へ戻る':'次へ','next')}`;
  if(verifyEnabled&&tratioLesson&&s.result&&['result','explanation'].includes(s.screen))content+=tratioDetails(tratioLesson,s.result.assessment.choice?.choiceId);
+ if(s.screen==='home'&&p.activeUnit==='TRATIO')content=content.replace('進度に関係なく、実戦で確かめる。','7技能を安定させ、実戦で確かめる。');
  if(s.screen==='home'&&p.activeUnit==='TRATIO')content+=`<section class="panel"><h2>三角比の4STEP</h2><ol>${tratioSteps.map(t=>`<li>${t.number} ${esc(t.title)}</li>`).join('')}</ol></section>`;
- if(s.screen==='max'&&s.unitId==='TRATIO')content='<h1>三角比 MAX</h1><p>新しい固定候補3題は現在、難度・所要時間の確認段階です。通常のMAX判定にはまだ接続していません。技能のstableは保持しています。</p><p>三角関数はQFN MAXとTRATIO MAXの両方が必要です。</p>'+(verifyEnabled?button('MAX原型を含む三角比教材を確認','tratio-open',true):'');
+ if(s.screen==='max'&&s.unitId==='TRATIO')content=`<h1>三角比 MAX</h1><p>7技能をすべてstableにしたうえで、固定候補1題を紙に解き切ります。6択の最終結論と、根拠・条件・ヒントなしの自己確認がすべてそろうとMAXです。</p><p>失敗後は日数を待たず、別の候補へ再挑戦できます。三角関数の解放には二次関数MAXと三角比MAXの両方が必要です。</p>${!tratioMaxReady(curriculum,p)?'<p>先に7技能の学習と修復を完了してください。</p>':''}${button('三角比MAXに挑戦','start-max',false,!tratioMaxReady(curriculum,p)||!!s.current&&!s.result)}${button('MAX前の総合練習','prepare-tratio',true,!tratioMaxReady(curriculum,p)||!!s.current&&!s.result)}`;
+ const trBankProblem=s.problem?tratioBankById.get(s.problem.id):undefined;
+ if(trBankProblem&&s.screen==='problem')content=content.replace('</section>',`</section>${trBankProblem.problemFigure}`);
+ if(trBankProblem&&s.screen==='explanation'&&s.result)content=`<h1>答えと解説</h1>${tratioBankExplanation(trBankProblem)}${button(s.result.repaired?'元問題へ戻る':'次へ','next')}`;
+ if(verifyEnabled&&trBankProblem&&s.result&&['result','explanation'].includes(s.screen))content+=tratioBankDetails(trBankProblem,s.result.assessment.choice?.choiceId);
+
  if(s.screen==='explanation'&&s.problem?.skillId.startsWith('QF-')&&s.result&&s.result.outcome!=='prerequisite')content=`<h1>答えと解説</h1>${bankProblem?bankExplanation(bankProblem):quadraticExplanation(s.problem)}${button(p.repair?'必要な技能へ':s.result.repaired?'元問題へ復帰':'次へ','next')}`;
  if(verifyEnabled&&bankProblem&&s.result&&['result','explanation'].includes(s.screen))content+=bankDetails(bankProblem,s.result.assessment.choice?.choiceId);
  if(s.screen==='max'&&p.activeUnit==='QFN'&&master.skills.filter(x=>x.unitId==='QFN'&&!curriculum.retiredSkillIds?.includes(x.id)).every(x=>p.skills[x.id]==='stable'))content+=button('MAX前の総合練習','prepare-qfn',true,!!s.current&&!s.result);
@@ -144,21 +153,24 @@ function render(){
  if(verifyEnabled&&placementFamilyOpen)content=renderPlacementPrototype();
  if(verifyEnabled&&integratedFamilyOpen)content=renderIntegratedPrototype();
  if(verifyEnabled&&bankOpen)content=renderBank();
- if(verifyEnabled&&tratioOpen)content=renderTratio();
- if(verifyEnabled&&tratioRightOpen)content=renderRightPrototype();
- if(verifyEnabled&&tratioGeneralOpen)content=renderGeneralPrototype();
- if(verifyEnabled&&tratioIntegratedOpen)content=renderIntegratedTratioPrototype();
+ if(verifyEnabled&&tratioOpen)content=renderTratio().replace('通常MAXの既存3回・7日・1日1回ルールは変更していません。','ここにあるMAX原型は履歴用です。現行の通常MAXは本番バンクの固定3候補で、厳格な完全成功1回を使います。');
+ if(verifyEnabled&&tratioRightOpen)content=rightPrototype?.renderRightPrototype()??'読み込み中…';
+ if(verifyEnabled&&tratioGeneralOpen)content=generalPrototype?.renderGeneralPrototype()??'読み込み中…';
+ if(verifyEnabled&&tratioIntegratedOpen)content=integratedTratioPrototype?.renderIntegratedTratioPrototype()??'読み込み中…';
+ if(verifyEnabled&&tratioBankOpen)content=renderTratioBank();
  app.innerHTML=`<header class="site-header"><div class="brand"><span class="brand-icon">∑</span><span>数学の道<small>二次関数 · 教材検証版</small></span></div><span class="header-badge">${learning.namespace.startsWith('demo:')?'DEMO':'LOCAL'}</span></header><div class="shell">${dev}<p class="status-message" role="status">${saving?'保存中…':'端末に保存済み'} · ${learning.namespace.startsWith('demo:')?'開発デモ':'通常学習'}</p><main id="main" tabindex="-1">${error?`<div class="error" role="alert">${esc(error)}</div>`:''}${s.notice?`<p class="status-message" role="status">${esc(s.notice)}</p>`:''}${content}</main></div><nav class="bottom-nav" aria-label="メインナビ"><button data-action="home" ${s.screen==='home'||s.screen==='diagnostic'?'aria-current="page"':''}><span>⌂</span>ホーム</button><button data-action="map" ${s.screen==='map'?'aria-current="page"':''}><span>⋮</span>攻略マップ</button><button data-action="records" ${s.screen==='records'?'aria-current="page"':''}><span>▤</span>記録</button></nav>`;
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作4 2解の位置・区間条件','placement-family-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作5 二次関数・総合判断','integrated-family-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('本番問題バンク 90題を確認','bank-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('三角比 TRATIOの新教材を確認','tratio-open',true));
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作1 直角三角形・図形計量','tratio-right-open',true));
- if(verifyEnabled&&tratioRightOpen)bindRightPrototype(app,render,()=>{tratioRightOpen=false;render();});
+ if(verifyEnabled&&tratioRightOpen)rightPrototype?.bindRightPrototype(app,render,()=>{tratioRightOpen=false;render();});
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作2 一般三角形の計量','tratio-general-open',true));
- if(verifyEnabled&&tratioGeneralOpen)bindGeneralPrototype(app,render,()=>{tratioGeneralOpen=false;render();});
+ if(verifyEnabled&&tratioGeneralOpen)generalPrototype?.bindGeneralPrototype(app,render,()=>{tratioGeneralOpen=false;render();});
  if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('生成問題ファミリー試作3 三角比・総合判断','tratio-integrated-open',true));
- if(verifyEnabled&&tratioIntegratedOpen)bindIntegratedTratioPrototype(app,render,()=>{tratioIntegratedOpen=false;render();});
+ if(verifyEnabled&&tratioIntegratedOpen)integratedTratioPrototype?.bindIntegratedTratioPrototype(app,render,()=>{tratioIntegratedOpen=false;render();});
+ if(verifyEnabled)app.querySelector('.dev-content')?.insertAdjacentHTML('afterbegin',button('三角比 本番バンク70題・MAX3候補','trbank-open',true));
+ if(verifyEnabled&&tratioBankOpen)bindTratioBank(app,render);
  if(verifyEnabled&&tratioOpen)bindTratio(app,render);else if(tratioLesson)bindCircle(app);
  if(verifyEnabled&&bankOpen)bindBank(app,render);
  if(bankProblem&&s.screen==='explanation')bindBankGraph(app,bankProblem);
@@ -184,14 +196,18 @@ app.addEventListener('click',e=>{
  if(target.dataset.boundary!==undefined||target.dataset.boundaryIndex!==undefined||target.dataset.familyAction!==undefined||target.dataset.axisAction!==undefined||target.dataset.countAction!==undefined||target.dataset.placementAction!==undefined||target.dataset.integratedAction!==undefined)return;
  if(target.dataset.unit){detailsUnit=detailsUnit===target.dataset.unit?null:target.dataset.unit;render();return;}
  const action=target.dataset.action;
+ if(target.dataset.trbankAction!==undefined)return;
  if(target.dataset.tratioAction!==undefined||target.dataset.tratioAngle!==undefined||target.dataset.trRightAction!==undefined||target.dataset.trGeneralAction!==undefined||target.dataset.trIntegratedAction!==undefined)return;
  if(action==='reload'){location.reload();return;}
  if(!ready||saving)return;
- if(action==='tratio-integrated-open'){if(verifyEnabled){tratioIntegratedOpen=true;tratioGeneralOpen=false;tratioRightOpen=false;tratioOpen=false;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
+ if(action==='trbank-preview'&&verifyEnabled){const id=selectedTratioBank();tratioBankOpen=false;void act(()=>{},()=>learning.useReviewedPreview(id,true));return;}
+ if(action==='trbank-open'&&verifyEnabled){tratioBankOpen=true;render();return;}
+ tratioBankOpen=false;
+ if(action==='tratio-integrated-open'){if(verifyEnabled){if(!integratedTratioPrototype)void import('../prototype/tratio-integrated-view.ts').then(m=>{integratedTratioPrototype=m;render();}).catch(e=>{error=String(e);render();});tratioIntegratedOpen=true;tratioGeneralOpen=false;tratioRightOpen=false;tratioOpen=false;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(tratioIntegratedOpen)tratioIntegratedOpen=false;
- if(action==='tratio-general-open'){if(verifyEnabled){tratioGeneralOpen=true;tratioRightOpen=false;tratioOpen=false;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
+ if(action==='tratio-general-open'){if(verifyEnabled){if(!generalPrototype)void import('../prototype/tratio-general-view.ts').then(m=>{generalPrototype=m;render();}).catch(e=>{error=String(e);render();});tratioGeneralOpen=true;tratioRightOpen=false;tratioOpen=false;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(tratioGeneralOpen)tratioGeneralOpen=false;
- if(action==='tratio-right-open'){if(verifyEnabled){tratioRightOpen=true;tratioOpen=false;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
+ if(action==='tratio-right-open'){if(verifyEnabled){if(!rightPrototype)void import('../prototype/tratio-right-view.ts').then(m=>{rightPrototype=m;render();}).catch(e=>{error=String(e);render();});tratioRightOpen=true;tratioOpen=false;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(tratioRightOpen)tratioRightOpen=false;
  if(action==='tratio-open'){if(verifyEnabled){tratioOpen=true;bankOpen=false;integratedFamilyOpen=false;placementFamilyOpen=false;countFamilyOpen=false;axisFamilyOpen=false;familyOpen=false;render();}return;}
  if(action==='tratio-preview'&&verifyEnabled){const id=selectedTratio();tratioOpen=false;void act(()=>{},()=>learning.useReviewedPreview(id,false));return;}
@@ -225,6 +241,7 @@ app.addEventListener('click',e=>{
    case'introduction':service.showIntroduction();break;
    case'home':case'map':case'records':case'max':service.navigate(action);break;
    case'continue':service.continueLearning();break;
+   case'prepare-tratio':service.prepareTratio();break;
    case'prepare-qfn':service.prepareQfn();break;
    case'accept-diagnosis':service.acceptDiagnosis();break;
    case'submission':clearImage();realMode=false;service.submission();break;

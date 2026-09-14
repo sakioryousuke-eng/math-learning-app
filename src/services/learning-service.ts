@@ -1,3 +1,5 @@
+import {selectTratioPractice,tratioMaxReady,tratioStrictEvidence} from '../tratio-bank/selector.ts';
+import {tratioGeneratedEvidence} from '../tratio-bank/types.ts';
 import {legacyCatalog} from './catalog.ts';
 import {choiceAssessment} from '../grading/paper-choices.ts';
 import {allPaperSpecs as paperSpecs,generatedEvidence} from '../bank/paper.ts';
@@ -30,7 +32,7 @@ export class LearningService {
   private learner:Learner;
   private catalog:LearningCatalog;
   private get master(){return this.catalog.master;}
-  private paperMax(unitId:string){return this.catalog.paperChoiceGrading===true&&unitId==='QFN';}
+  private paperMax(unitId:string){return this.catalog.paperChoiceGrading===true&&(unitId==='QFN'||unitId==='TRATIO'&&this.catalog.tratioSingleMax===true);}
   private get problems(){return this.catalog.problems;}
   private get routeMaster(){return {...this.master,skills:this.master.skills.filter(s=>!this.catalog.retiredSkillIds?.includes(s.id)),units:this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id)||u.id===this.learner.activeUnit)};}
   private get diagnosticUnits(){return this.master.units.filter(u=>this.catalog.mainUnitIds.includes(u.id));}
@@ -73,7 +75,7 @@ export class LearningService {
     const p=this.learner,task=selectTask(this.routeMaster,p);
     const unitId=p.activeUnit??this.routeMaster.units.find(u=>unitStatus(this.master,p,u.id)==='OPEN')?.id??null;
     const policy=unitId?this.master.maxDefinitions.find(d=>d.unitId===unitId)!:null;
-    const evidence=unitId?maxEvidence(this.master,eligibleEvidenceLearner(this.catalog,p),unitId,this.now):[];
+    const evidence=unitId==='TRATIO'&&this.catalog.tratioSingleMax?tratioStrictEvidence(this.catalog,p,this.now):unitId?maxEvidence(this.master,eligibleEvidenceLearner(this.catalog,p),unitId,this.now):[];
     const attempts=unitId?[...(p.maxAttempts[unitId]??[]),...(p.diagnosticMaxEvidence[unitId]??[])]:[];
     const usedToday=attempts.filter(a=>dateKey(a.at)===dateKey(this.now)).length;
     const availableMax=unitId?this.nextMax(unitId):null;
@@ -85,7 +87,7 @@ export class LearningService {
   private practice(skillId:string,context:Assessment['context']='practice'):Problem {
     const pool=this.problems.filter(p=>p.skillId===skillId&&p.purpose==='practice'&&canUse(this.catalog,p,context));
     const previous=this.current?.problemId??this.used.at(-1);
-    if(context==='practice'||context==='warmup'){const selected=selectQfnPractice(this.catalog,this.learner,skillId,pool,this.used);if(selected)return selected;}
+    if(context==='practice'||context==='warmup'){const selected=selectTratioPractice(this.catalog,this.learner,skillId,pool,this.used)??selectQfnPractice(this.catalog,this.learner,skillId,pool,this.used);if(selected)return selected;}
     const next=pool.find(p=>!this.used.includes(p.id))??pool.find(p=>p.id!==previous);
     if(!next)throw new Error('この技能は教材の数学的確認待ちです。検証済みの別問題がそろうまで学習を保留します。');return next;
   }
@@ -100,6 +102,8 @@ export class LearningService {
   }
   private open(problem:Problem,context:Assessment['context'],probe=false){
     if(!canUse(this.catalog,problem,context))throw new Error('この問題は教材確認待ちです。保存された履歴と復帰先は保持しています。');
+    // A fresh fixed candidate starts a new no-hint attempt; earlier reviews remain in history.
+    if(context==='max'&&this.catalog.tratioSingleMax&&this.catalog.tratioBank?.some(p=>p.id===problem.id&&p.purpose==='max'))this.hintedProblems=this.hintedProblems.filter(id=>id!==problem.id);
     this.realToken=crypto.randomUUID();this.realStartedAt=Date.now();this.realSubmittedAt=null;
     this.current={problemId:problem.id,context,probe};this.used.push(problem.id);this.result=null;this.screen='problem';this.ended=false;
   }
@@ -144,9 +148,16 @@ export class LearningService {
     const {unitId,usedToday,policy}=this.snapshot;
     if(!unitId||!policy)throw new Error('すべての実装単元がMAXです。');
     if(!this.paperMax(unitId)&&usedToday>=policy.dailyLimit)throw new Error('本日のMAX挑戦は提出済みです。');
+    if(unitId==='TRATIO'&&this.catalog.tratioSingleMax&&!tratioMaxReady(this.catalog,this.learner))throw new Error('三角比の7技能をすべてstableにしてからMAXへ進んでください。');
     const next=this.nextMax(unitId);if(!next)throw new Error('固定MAX問題をすべて使用しました。開発用ユーザーを切り替えて確認してください。');
     if(!this.learner.activeUnit)startUnit(this.master,this.learner,unitId);
     this.open(next,'max');
+  }
+  prepareTratio(){
+    if(!tratioMaxReady(this.catalog,this.learner)||this.learner.activeUnit!=='TRATIO'||this.current&&!this.result)throw new Error('現在の学習と7技能の確認を先に完了してください。');
+    const pool=this.problems.filter(p=>p.skillId==='TR-INTEGRATE'&&p.purpose==='practice'&&canUse(this.catalog,p,'practice'));
+    const next=selectTratioPractice(this.catalog,this.learner,'TR-INTEGRATE',pool,this.used,true);if(!next)throw new Error('練習教材がありません。');
+    this.practiceFocus='TR-INTEGRATE';this.open(next,'practice');
   }
   prepareQfn(){
     if(!this.learner.diagnosticCompleted||this.learner.activeUnit!=='QFN'||this.learner.repair||this.learner.resume||this.current&&!this.result)throw new Error('現在の学習を完了してから練習してください。');
@@ -165,6 +176,7 @@ export class LearningService {
       const ancestors=(id:string):string[]=>this.master.skills.find(s=>s.id===id)!.prerequisites.flatMap(pre=>[pre,...ancestors(pre)]);
       if(outcome!=='prerequisite'||!ancestors(p.skillId).includes(implicatedSkill))throw new Error('この答案の前提技能として扱えません。');
     }
+    if(c.context==='max'&&this.master.skills.find(s=>s.id===p.skillId)?.unitId==='TRATIO'&&this.catalog.tratioSingleMax)throw new Error('三角比MAXは紙答案の6択と厳格な自己確認で提出してください。');
     const a=gradeMock(implicatedSkill?{...p,repairSkillId:implicatedSkill}:p,outcome,this.id(),this.now,c.context);
     if(this.catalog.reviewedOnly&&this.hintedProblems.includes(p.id))a.independent=false;
     this.applyGrading(outcome,a,undefined,implicatedSkill?[{...structuredClone(a),id:this.id(),skillId:implicatedSkill}]:undefined);
@@ -178,12 +190,21 @@ export class LearningService {
     const a=choiceAssessment(spec,choiceId,confirmed,base);
     const bankProblem=this.catalog.generatedBank?.find(b=>b.id===p.id);
     if(bankProblem)a.generatedEvidence=generatedEvidence(bankProblem,choiceId);
+    const tratioBank=this.catalog.tratioBank?.find(b=>b.id===p.id);
+    if(tratioBank){a.generatedEvidence=tratioGeneratedEvidence(tratioBank,choiceId);const h=tratioBank.choices.find(c=>c.choiceId===choiceId)!.hypothesis;a.tratioEvidence={choiceId,mistakeType:h?.type??null,description:h?.description??null,crossSkills:h?.crossSkills??[],repairSkillId:h?.repairSkillId??null,hypothesisOnly:true};if(a.solved&&a.independent&&spec.checks.every(c=>confirmed.includes(c.id)))for(const x of tratioBank.crossSkills)a.crossSkills[x]='success';}
     const tratio=tratioById.get(p.id),tratioChoice=tratio?.choices.find(c=>c.choiceId===choiceId);
     if(tratioChoice){const h=tratioChoice.hypothesis;a.tratioEvidence={choiceId,mistakeType:h?.type??null,description:h?.description??null,crossSkills:h?.crossSkills??[],repairSkillId:h?.repairSkillId??null,hypothesisOnly:true};}
-    if(this.current.context==='max'&&(!this.paperMax(this.master.skills.find(s=>s.id===p.skillId)!.unitId)||!['OPEN','ACTIVE'].includes(unitStatus(this.master,this.learner,'QFN'))||this.learner.activeUnit&&this.learner.activeUnit!=='QFN'))throw new Error('MAXに挑戦できる単元ではありません。');
+    if(this.current.context==='max'){
+      const unit=this.master.skills.find(s=>s.id===p.skillId)!.unitId;
+      if(!this.paperMax(unit)||!['OPEN','ACTIVE'].includes(unitStatus(this.master,this.learner,unit))||this.learner.activeUnit&&this.learner.activeUnit!==unit)throw new Error('MAXに挑戦できる単元ではありません。');
+      if(unit==='TRATIO'){
+        if(!tratioMaxReady(this.catalog,this.learner)||this.learner.maxAttempts.TRATIO?.at(-1)?.problemId===p.id)throw new Error('技能の確認を終え、直前と異なるMAX候補に挑戦してください。');
+        if(!a.independent)a.solved=false;
+      }
+    }
     this.serial++;
     this.applyGrading(a.solved?'correct':a.tags.includes('case_split')?'case_split':'calculation',a,undefined,[]);
-    if(tratio&&!a.solved&&this.current.context==='practice'&&!this.learner.repair){
+    if((tratio||tratioBank)&&!a.solved&&this.current.context==='practice'&&!this.learner.repair){
       const h=a.tratioEvidence!,target=h.repairSkillId;
       const history=this.learner.assessments.filter(x=>x.skillId===p.skillId&&x.context==='practice');
       const recent=history.slice(history.findLastIndex(x=>x.solved)+1).slice(-4);
@@ -202,6 +223,7 @@ export class LearningService {
   }
   private applyGrading(outcome:MockOutcome,a:Assessment,maxOverride?:MaxAttempt,observations?:Assessment[]){
     const c=this.current!,p=this.problem(c.problemId);
+    if(c.context==='max'&&this.catalog.tratioSingleMax&&this.master.skills.find(s=>s.id===p.skillId)?.unitId==='TRATIO'&&!a.choice)throw new Error('三角比MAXは6択と厳格な紙答案確認で提出してください。');
     const repairTarget=observations===undefined?p.repairSkillId:observations[0]?.skillId??null;
     let acquired=false,repaired=false,stable=false,notice='';
     if(c.context==='max'){
@@ -214,8 +236,8 @@ export class LearningService {
       }
       const unit=this.master.skills.find(s=>s.id===p.skillId)!.unitId;
       if(this.paperMax(unit)&&a.choice){
-        (this.learner.maxAttempts[unit]??=[]).push({...max,practicalTime:true,correctConclusion:a.choice.correct,readable:a.choice.confirmed.includes('readable'),examQuality:a.solved,sufficientWriting:a.choice.missing.length===0});
-        if(a.solved){this.learner.maxUnits.push(unit);for(const skill of this.master.skills.filter(s=>s.unitId===unit))this.learner.skills[skill.id]='stable';this.learner.activeUnit=null;this.learner.repair=null;this.learner.resume=null;acquired=true;}
+        (this.learner.maxAttempts[unit]??=[]).push({...max,...(unit==='TRATIO'?{noHint:a.independent&&a.choice.confirmed.includes('no-hint'),independent:a.independent&&a.choice.confirmed.includes('not-guess')}:{}),practicalTime:true,correctConclusion:a.choice.correct,readable:a.choice.confirmed.includes('readable'),examQuality:a.solved,sufficientWriting:a.choice.missing.length===0});
+        if(a.solved){this.learner.maxUnits.push(unit);for(const skill of this.master.skills.filter(s=>s.unitId===unit&&(unit!=='TRATIO'||!this.catalog.retiredSkillIds?.includes(s.id))))this.learner.skills[skill.id]='stable';this.learner.activeUnit=null;this.learner.repair=null;this.learner.resume=null;acquired=true;}
       }else if(this.catalog.reviewedOnly){
         const projected=eligibleEvidenceLearner(this.catalog,this.learner);
         acquired=submitMax(this.master,projected,unit,max);
@@ -297,7 +319,7 @@ export class LearningService {
   openReviewedPreview(problemId:string,stable=false){
     if(!this.devMode)throw new Error('開発モードのみ利用できます。');
     const problem=this.problem(problemId);
-    if(problem.reviewStatus!=='reviewed'&&!this.catalog.generatedBank?.some(b=>b.id===problem.id&&b.verificationStatus==='verified-generated'))throw new Error('検証済みの教材だけを選択してください。');
+    if(problem.reviewStatus!=='reviewed'&&!this.catalog.generatedBank?.some(b=>b.id===problem.id&&b.verificationStatus==='verified-generated')&&!this.catalog.tratioBank?.some(b=>b.id===problem.id&&b.verificationStatus==='verified-generated'))throw new Error('検証済みの教材だけを選択してください。');
     this.switchProfile('new');
     const p=this.learner,skill=this.master.skills.find(s=>s.id===problem.skillId)!;
     const seedUnit=(id:string)=>{for(const pre of this.master.units.find(u=>u.id===id)!.prerequisites){seedUnit(pre);if(!p.maxUnits.includes(pre))p.maxUnits.push(pre);for(const s of this.master.skills.filter(s=>s.unitId===pre))p.skills[s.id]='stable';}};
@@ -365,7 +387,7 @@ export class LearningService {
     startUnit(this.master,p,profile==='max-two'?'QEQ':'QFN');
     if(profile==='quadratic'){if(this.catalog.reviewedOnly){p.lastSkillId=null;p.warmupRemaining=0;}else{p.skills.QFN1='stable';p.lastSkillId='QFN1';beginSession(p);}}
     if(profile==='max-two'||profile==='qfn-ready'){
-      const unit=p.activeUnit!;for(const s of this.master.skills.filter(s=>s.unitId===unit))p.skills[s.id]='stable';
+      const unit=p.activeUnit!;for(const s of this.master.skills.filter(s=>s.unitId===unit&&(unit!=='TRATIO'||!this.catalog.retiredSkillIds?.includes(s.id))))p.skills[s.id]='stable';
       for(const [i,problem] of this.problems.filter(s=>s.purpose==='max'&&canUse(this.catalog,s,'max')&&this.master.skills.find(k=>k.id===s.skillId)?.unitId===unit).slice(0,2).entries())submitMax(this.master,p,unit,{problemId:problem.id,independenceKey:problem.independenceKey,at:new Date(this.clock-(2-i)*86400000).toISOString(),noHint:true,noMethodSpecified:true,independent:true,examQuality:true,practicalTime:true,correctConclusion:true,readable:true,sufficientWriting:true});
     }
     if(profile==='repair'){
